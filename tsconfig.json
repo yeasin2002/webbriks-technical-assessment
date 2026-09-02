@@ -1,0 +1,3 @@
+{
+  "extends": "@webbriks-technical-assessment/config/tsconfig.base.json"
+}
