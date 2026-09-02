@@ -1,44 +1,89 @@
-# webbriks-technical-assessment
+# Mini Kanban Board
 
-This project was created with [Better Fullstack](https://github.com/Marve10s/Better-Fullstack) using the multi-ecosystem project graph.
+A full-stack collaborative Kanban board application built for the **Webbriks Technical Assessment**.
 
-## Stack
+## Tech Stack
 
-- Frontend: next (typescript)
-- Backend: not selected
+- **Frontend**: Next.js 16 (App Router), React 19, Tailwind CSS v4, shadcn/Radix UI
+- **Backend**: NestJS 11 (Express 5, TypeScript)
+- **Database**: PostgreSQL 16 with Prisma ORM
+- **Monorepo & DevOps**: Turborepo, Bun, Docker Compose
+
+---
 
 ## Project Structure
 
 ```text
 webbriks-technical-assessment/
 ├── apps/
-│   ├── web/         # Frontend application
-└── package.json     # Root scripts for the generated graph
+│   ├── web/        # Next.js frontend (Port 3001)
+│   └── server/     # NestJS backend API (Port 3000)
+├── packages/
+│   ├── db/         # Prisma schema and database client
+│   ├── env/        # Type-safe environment schemas
+│   └── config/     # Shared TypeScript configurations
+└── docker-compose.yml
 ```
 
-## Local Development
+---
 
-Install the JavaScript workspace dependencies first. If you created the project with `--no-install`, this step has not run yet.
+## Getting Started
 
+### Prerequisites
+- [Bun](https://bun.sh/) (v1.3+)
+- [Docker](https://www.docker.com/) (for PostgreSQL / containerized workflow)
+
+### 1. Installation
 ```sh
 bun install
 ```
 
-Database-backed backend selections expect a local postgres database or a matching `DATABASE_URL` in the backend environment before you start the server. Copy the backend `.env.example` to `.env` and adjust it for your machine.
+### 2. Environment Configuration
 
-Run the generated apps in separate terminals so each ecosystem keeps its native watcher and logs.
-
-```sh
-bun dev:web
+**Backend (`apps/server/.env`)**:
+```env
+CORS_ORIGIN=http://localhost:3001
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/webbriks-technical-assessment
 ```
 
-## Root Scripts
+**Frontend (`apps/web/.env`)**:
+```env
+NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+```
 
-- `dev` starts the primary generated workspace for graph projects.
-- `dev:web` starts the frontend workspace.
+### 3. Database Setup
+Start the local PostgreSQL container and push the schema:
+```sh
+docker compose up -d db
+bun db:push
+```
 
-## Compatibility Notes
+### 4. Run Development Servers
+```sh
+bun dev
+```
+- **Web App**: [http://localhost:3001](http://localhost:3001)
+- **API Server**: [http://localhost:3000](http://localhost:3000)
 
-- TypeScript frontends can be generated with Elixir Phoenix backends; Phoenix runs on port 4000 and exposes `/api/health`.
-- Astro frontends can be generated with Rust backends; Rust web servers run on port 3000 and expose `/health`.
-- Cross-ecosystem graph projects share an HTTP boundary. Framework-specific API clients such as tRPC are not assumed across language boundaries; the scaffold wires the frontend to the backend base URL and health endpoint.
+---
+
+## Docker Setup (All-in-One)
+
+To run the full stack (database, backend, and frontend) in Docker containers:
+```sh
+docker compose up --build
+```
+
+---
+
+## Useful Commands
+
+| Command | Description |
+|---|---|
+| `bun dev` | Run all applications concurrently |
+| `bun dev:web` | Run only the Next.js frontend |
+| `bun dev:server` | Run only the NestJS backend |
+| `bun check-types` | Run type checking across workspaces |
+| `bun build` | Build all apps for production |
+| `bun db:push` | Push schema changes to database |
+| `bun db:studio` | Open Prisma Studio UI |
