@@ -3,10 +3,10 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "build": "tsdown",
+    "build": "nest build",
     "check-types": "tsc -b",
     "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
-    "dev": "tsx watch src/index.ts",
+    "dev": "nest start --watch --exec bun",
     "start": "node dist/index.js"
   },
   "dependencies": {
@@ -22,6 +22,9 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@nestjs/cli": "^12.0.0",
+    "@swc/cli": "^0.8.1",
+    "@swc/core": "^1.16.1",
     "@types/express": "^5.0.6",
     "@types/node": "catalog:",
     "@webbriks-technical-assessment/config": "workspace:*",

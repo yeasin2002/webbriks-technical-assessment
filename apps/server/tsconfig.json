@@ -3,11 +3,13 @@
   "compilerOptions": {
     "composite": true,
     "outDir": "dist",
+    "rootDir": "src",
     "paths": {
       "@/*": ["./src/*"]
     },
     "jsx": "react-jsx",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
-  }
+  },
+  "include": ["src/**/*"]
 }
