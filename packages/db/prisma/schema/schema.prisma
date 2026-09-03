@@ -14,5 +14,64 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  ownedBoards      Board[]       @relation("BoardOwner")
+  boardMemberships BoardMember[]
+
   @@map("users")
+}
+
+model Board {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  ownerId     String   @map("owner_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  owner   User          @relation("BoardOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members BoardMember[]
+  columns Column[]
+
+  @@map("boards")
+}
+
+model BoardMember {
+  id        String   @id @default(uuid())
+  boardId   String   @map("board_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([boardId, userId])
+  @@map("board_members")
+}
+
+model Column {
+  id        String   @id @default(uuid())
+  name      String
+  order     Float    @default(0)
+  boardId   String   @map("board_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  board Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  @@map("columns")
+}
+
+model Task {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  order       Float    @default(0)
+  columnId    String   @map("column_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  column Column @relation(fields: [columnId], references: [id], onDelete: Cascade)
+
+  @@map("tasks")
 }
