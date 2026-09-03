@@ -1,0 +1,134 @@
+"use client";
+
+import React, { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { IconArrowRight, IconLayoutKanban, IconLock, IconMail } from "@tabler/icons-react";
+import { toast } from "sonner";
+import { useAuthStore } from "@/store";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const login = useAuthStore((state) => state.login);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const error = useAuthStore((state) => state.error);
+  const clearError = useAuthStore((state) => state.clearError);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearError();
+
+    if (!email.trim() || !password) {
+      toast.error("Please fill in both email and password");
+      return;
+    }
+
+    try {
+      await login(email.trim(), password);
+      toast.success("Welcome back!", {
+        description: "You have successfully signed in.",
+      });
+      router.push("/");
+    } catch (err: any) {
+      toast.error("Authentication failed", {
+        description: err.message || "Invalid email or password",
+      });
+    }
+  };
+
+  return (
+    <div className="flex min-h-[calc(100vh-56px)] items-center justify-center p-6 bg-white dark:bg-[#0f0f11]">
+      <div className="w-full max-w-md rounded-3xl border border-neutral-200/90 dark:border-neutral-800 bg-white dark:bg-neutral-900/90 p-8 shadow-xl">
+        {/* Brand Header */}
+        <div className="flex flex-col items-center text-center">
+          <div className="flex size-12 items-center justify-center rounded-2xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-md mb-3">
+            <IconLayoutKanban className="size-6" />
+          </div>
+          <span className="rounded-full bg-neutral-100 dark:bg-neutral-800 px-3 py-0.5 text-[10.5px] font-black uppercase tracking-widest text-neutral-600 dark:text-neutral-300">
+            AUTHENTICATION
+          </span>
+          <h1 className="mt-2 text-2xl font-black uppercase tracking-tight text-neutral-900 dark:text-white">
+            Sign In to Webbriks
+          </h1>
+          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            Enter your email and password to access your Kanban boards
+          </p>
+        </div>
+
+        {/* Error Banner */}
+        {error && (
+          <div className="mt-5 rounded-2xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 p-3 text-xs font-semibold text-red-700 dark:text-red-300">
+            {error}
+          </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1.5 pl-1">
+              Email Address
+            </label>
+            <div className="relative">
+              <IconMail className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-neutral-400" />
+              <input
+                type="email"
+                required
+                autoFocus
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-full border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 pl-11 pr-4 py-2.5 text-xs font-medium text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:border-neutral-900 dark:focus:border-white focus:outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-white transition-all"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1.5 pl-1">
+              Password
+            </label>
+            <div className="relative">
+              <IconLock className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-neutral-400" />
+              <input
+                type="password"
+                required
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-full border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 pl-11 pr-4 py-2.5 text-xs font-medium text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:border-neutral-900 dark:focus:border-white focus:outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-white transition-all"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-[#111111] dark:bg-white py-3 text-xs font-bold text-white dark:text-neutral-900 shadow-md hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all active:scale-[0.99] disabled:opacity-50"
+          >
+            {isLoading ? (
+              <span>Signing In...</span>
+            ) : (
+              <>
+                <span>Sign In</span>
+                <IconArrowRight className="size-4" />
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Footer Link */}
+        <div className="mt-6 text-center text-xs text-neutral-500 dark:text-neutral-400">
+          Don&apos;t have an account?{" "}
+          <Link
+            href="/register"
+            className="font-bold text-neutral-900 dark:text-white underline underline-offset-4 hover:no-underline"
+          >
+            Create an account
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}

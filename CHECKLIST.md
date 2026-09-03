@@ -111,17 +111,21 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 ### 2. Authentication Views (`apps/web`)
 
 #### Completed Tasks:
-- *(None yet — UI pages pending)*
+- [x] **API Client & Auth Store (`lib/api.ts`, `store/auth-store.ts`)**:
+  - Lightweight `apiFetch` wrapper with automatic JWT Bearer headers and error handling.
+  - Zustand auth store with localStorage persistence for `user` and `token`.
+- [x] **Register Page (`/register`)**:
+  - Simple form: Name (optional), Email, Password (min 6 chars).
+  - Calls `POST /auth/register`, sets token/user state, and redirects to board view.
+- [x] **Login Page (`/login`)**:
+  - Simple form: Email, Password.
+  - Calls `POST /auth/login`, sets token/user state, and redirects to board view.
+- [x] **Navigation Header Integration (`components/header.tsx`)**:
+  - Displays authenticated user initials and email when logged in with a "Sign Out" button.
+  - Displays "Sign In" and "Register" links when unauthenticated.
 
 #### Remaining Tasks:
-- [ ] **Register Page (`/register`)**:
-  - Simple form: Name, Email, Password.
-  - Calls `POST /auth/register`, sets auth state, and redirects to boards dashboard.
-- [ ] **Login Page (`/login`)**:
-  - Simple form: Email, Password.
-  - Calls `POST /auth/login`, sets auth state, and redirects to boards dashboard.
-- [ ] **Navigation Header Integration**:
-  - Display current user name/email, logout button, or login/register links.
+- *(None — Auth views and integration complete)*
 
 ---
 
@@ -145,21 +149,18 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 ### 4. Kanban Board View & Drag-and-Drop (`apps/web`)
 
 #### Completed Tasks:
-- *(None yet — UI components pending)*
-
-#### Completed Tasks:
 - [x] **Interactive Kanban Board View (`components/board/kanban-board.tsx`)**:
   - Columns layout, board header with sprint indicator, search input, and priority filter chips.
 - [x] **Task Card Component (`components/board/task-card.tsx`)**:
-  - Pill badges, priority signaling (CRITICAL/HIGH/MEDIUM/LOW), subtasks progress, comments count, and assignee pill.
+  - Clean card with title, description, drag handle, and delete.
 - [x] **Board Sharing Modal (`components/board/share-modal.tsx`)**:
   - Member access list, role indicators (Owner vs Collaborator), email invitation bar, and copy link action.
 - [x] **Task Details Inspection Modal (`components/board/task-detail-modal.tsx`)**:
-  - Full task description, priority editor, column mover, and checklist progress.
+  - Task title, description editor, column selector, and delete.
 - [x] **Client-Side Drag-and-Drop Reordering**:
   - Native drag-and-drop between columns and reordering with instant optimistic state updates and feedback toasts.
 - [x] **Header Component (`components/header.tsx`)**:
-  - High-contrast editorial brand lockup with pill geometry, sprint label, and dark/light mode toggle.
+  - High-contrast editorial brand lockup with pill geometry, user avatar, and dark/light mode toggle.
 
 #### Remaining Tasks (for full backend integration):
 - [ ] Connect board view to `GET /boards/:id` live API.
@@ -180,9 +181,9 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 | **Backend** | Tasks CRUD | **Pending** |
 | **Backend** | Task Movement & Reordering API | **Pending** |
 | **Frontend** | Base UI primitives & Tailwind v4 | **Completed** |
+| **Frontend** | API Client & Auth Provider | **Completed** |
+| **Frontend** | Login & Register Pages | **Completed** |
 | **Frontend** | Interactive Kanban Board View | **Completed (Static)** |
 | **Frontend** | Drag-and-Drop Task Movement & Reordering | **Completed (Client-side)** |
 | **Frontend** | Board Sharing Dialog | **Completed (Static)** |
-| **Frontend** | API Client & Auth Provider | **Pending** |
-| **Frontend** | Login & Register Pages | **Pending** |
 | **Frontend** | Boards Dashboard & Create Board | **Pending** |
