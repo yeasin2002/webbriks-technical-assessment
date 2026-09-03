@@ -6,16 +6,7 @@
     "build": "nest build",
     "check-types": "tsc -b",
     "dev": "nest start --watch",
-    "start": "node dist/index.js",
-    "db:start": "podman start webbriks-postgres 2>/dev/null || podman run -d --name webbriks-postgres -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -e POSTGRES_DB=webbriks-technical-assessment -v webbriks_postgres_data:/var/lib/postgresql/data:Z postgres:16-alpine",
-    "db:stop": "podman stop webbriks-postgres",
-    "db:restart": "podman restart webbriks-postgres",
-    "db:status": "podman ps -a --filter name=webbriks-postgres",
-    "db:logs": "podman logs -f webbriks-postgres",
-    "db:down": "podman rm -f webbriks-postgres",
-    "db:psql": "podman exec -it webbriks-postgres psql -U postgres -d webbriks-technical-assessment",
-    "db:push": "pnpm --filter @webbriks-technical-assessment/db db:push",
-    "db:studio": "pnpm --filter @webbriks-technical-assessment/db db:studio"
+    "start": "node dist/index.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.2.1",
