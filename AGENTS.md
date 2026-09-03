@@ -124,12 +124,18 @@ webbriks-technical-assessment/
 - `bun check-types`: Run type checks across all workspaces.
 - `bun build`: Build all applications for production.
 
-### Database Operations
+### Database & Container Operations (Docker / Podman)
+- `bun db:start`: Start the local PostgreSQL container via Podman/Docker.
+- `bun db:stop`: Stop the PostgreSQL container.
+- `bun db:status`: Inspect container status (`webbriks-postgres`).
+- `bun db:logs`: View live container logs.
+- `bun db:down`: Remove the PostgreSQL container.
+- `bun db:psql`: Open an interactive `psql` shell in the database container.
 - `bun db:generate`: Generate the Prisma client.
 - `bun db:push`: Push Prisma schema changes directly to the PostgreSQL database.
 - `bun db:migrate`: Run database migrations.
-- `bun db:studio`: Open Prisma Studio UI for database inspection.
+- `bun db:studio`: Open Prisma Studio web UI to inspect all users and database tables.
 
-### Docker Environment
-- `docker compose up -d db`: Start only the PostgreSQL database.
+### Docker / Podman Environment
+- `docker compose up -d db` or `bun db:start`: Start only the PostgreSQL database.
 - `docker compose up --build`: Build and run the entire full-stack application (web, server, db).

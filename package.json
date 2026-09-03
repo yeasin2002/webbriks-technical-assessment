@@ -25,9 +25,11 @@
     "db:generate": "turbo -F @webbriks-technical-assessment/db db:generate",
     "db:migrate": "turbo -F @webbriks-technical-assessment/db db:migrate",
     "db:start": "turbo -F @webbriks-technical-assessment/db db:start",
-    "db:watch": "turbo -F @webbriks-technical-assessment/db db:watch",
     "db:stop": "turbo -F @webbriks-technical-assessment/db db:stop",
-    "db:down": "turbo -F @webbriks-technical-assessment/db db:down"
+    "db:status": "turbo -F @webbriks-technical-assessment/db db:status",
+    "db:logs": "turbo -F @webbriks-technical-assessment/db db:logs",
+    "db:down": "turbo -F @webbriks-technical-assessment/db db:down",
+    "db:psql": "podman exec -it webbriks-postgres psql -U postgres -d webbriks-technical-assessment"
   },
   "dependencies": {
     "@webbriks-technical-assessment/env": "workspace:*",

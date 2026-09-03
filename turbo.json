@@ -43,6 +43,13 @@
     },
     "db:down": {
       "cache": false
+    },
+    "db:status": {
+      "cache": false
+    },
+    "db:logs": {
+      "cache": false,
+      "persistent": true
     }
   }
 }

@@ -31,7 +31,7 @@ webbriks-technical-assessment/
 
 ### Prerequisites
 - [Bun](https://bun.sh/) (v1.3+)
-- [Docker](https://www.docker.com/) (for PostgreSQL / containerized workflow)
+- [Podman](https://podman.io/) or [Docker](https://www.docker.com/) (for containerized PostgreSQL)
 
 ### 1. Installation
 ```sh
@@ -43,7 +43,7 @@ bun install
 **Backend (`apps/server/.env`)**:
 ```env
 CORS_ORIGIN=http://localhost:3001
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/webbriks-technical-assessment
+DATABASE_URL=postgresql://postgres:password@localhost:5432/webbriks-technical-assessment
 ```
 
 **Frontend (`apps/web/.env`)**:
@@ -51,10 +51,10 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/webbriks-technical-as
 NEXT_PUBLIC_SERVER_URL=http://localhost:3000
 ```
 
-### 3. Database Setup
+### 3. Database Setup (Podman / Docker)
 Start the local PostgreSQL container and push the schema:
 ```sh
-docker compose up -d db
+bun db:start
 bun db:push
 ```
 
@@ -63,15 +63,15 @@ bun db:push
 bun dev
 ```
 - **Web App**: [http://localhost:3001](http://localhost:3001)
-- **API Server**: [http://localhost:3000](http://localhost:3000)
+- **API Server & Swagger**: [http://localhost:3000](http://localhost:3000) (Swagger UI: [http://localhost:3000/api](http://localhost:3000/api))
 
 ---
 
-## Docker Setup (All-in-One)
+## Database Management & Inspection
 
-To run the full stack (database, backend, and frontend) in Docker containers:
+To visually inspect and manage users and database records in your browser:
 ```sh
-docker compose up --build
+bun db:studio
 ```
 
 ---
@@ -83,7 +83,12 @@ docker compose up --build
 | `bun dev` | Run all applications concurrently |
 | `bun dev:web` | Run only the Next.js frontend |
 | `bun dev:server` | Run only the NestJS backend |
-| `bun check-types` | Run type checking across workspaces |
+| `bun db:start` | Start local PostgreSQL container (Podman/Docker) |
+| `bun db:stop` | Stop PostgreSQL container |
+| `bun db:status` | Check PostgreSQL container status |
+| `bun db:logs` | View PostgreSQL container logs |
+| `bun db:studio` | Open Prisma Studio UI to inspect users & records |
+| `bun db:push` | Push schema changes directly to PostgreSQL |
+| `bun db:generate` | Generate Prisma client types |
+| `bun check-types` | Run type checking across all workspaces |
 | `bun build` | Build all apps for production |
-| `bun db:push` | Push schema changes to database |
-| `bun db:studio` | Open Prisma Studio UI |

@@ -16,10 +16,11 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "db:start": "docker compose up -d",
-    "db:watch": "docker compose up",
-    "db:stop": "docker compose stop",
-    "db:down": "docker compose down"
+    "db:start": "podman start webbriks-postgres 2>$null || podman run -d --name webbriks-postgres -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -e POSTGRES_DB=webbriks-technical-assessment -v webbriks_postgres_data:/var/lib/postgresql/data:Z postgres:16-alpine",
+    "db:stop": "podman stop webbriks-postgres",
+    "db:status": "podman ps -a --filter name=webbriks-postgres",
+    "db:logs": "podman logs -f webbriks-postgres",
+    "db:down": "podman rm -f webbriks-postgres"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",

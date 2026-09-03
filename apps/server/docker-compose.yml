@@ -1,4 +1,4 @@
-name: webbriks-technical-assessment
+name: webbriks-server-db
 
 services:
   postgres:
