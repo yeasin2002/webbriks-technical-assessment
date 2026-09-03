@@ -147,22 +147,24 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 #### Completed Tasks:
 - *(None yet — UI components pending)*
 
-#### Remaining Tasks:
-- [ ] **Board Page (`/boards/[id]`)**:
-  - Fetch board details with its columns and tasks.
-  - Render board title, share button, and columns side-by-side.
-- [ ] **Column Component (`components/board/column.tsx`)**:
-  - Column header with title, task count, and column delete/rename actions.
-  - "Add Task" button with inline or modal task creation form.
-  - Droppable container for task cards.
-- [ ] **Task Card Component (`components/board/task-card.tsx`)**:
-  - Display task title, description preview, and delete button.
-  - Draggable handle/card container.
-- [ ] **Drag-and-Drop Interaction Engine**:
-  - Implement drag-and-drop using `@hello-pangea/dnd` or `@dnd-kit` (or native HTML5 DnD).
-  - **Optimistic UI Updates**: Instantly update card position in state when dropped.
-  - Call `PATCH /tasks/:id/move` with `targetColumnId` and `newPosition`.
-  - Revert optimistic state gracefully if API call returns an error.
+#### Completed Tasks:
+- [x] **Interactive Kanban Board View (`components/board/kanban-board.tsx`)**:
+  - Columns layout, board header with sprint indicator, search input, and priority filter chips.
+- [x] **Task Card Component (`components/board/task-card.tsx`)**:
+  - Pill badges, priority signaling (CRITICAL/HIGH/MEDIUM/LOW), subtasks progress, comments count, and assignee pill.
+- [x] **Board Sharing Modal (`components/board/share-modal.tsx`)**:
+  - Member access list, role indicators (Owner vs Collaborator), email invitation bar, and copy link action.
+- [x] **Task Details Inspection Modal (`components/board/task-detail-modal.tsx`)**:
+  - Full task description, priority editor, column mover, and checklist progress.
+- [x] **Client-Side Drag-and-Drop Reordering**:
+  - Native drag-and-drop between columns and reordering with instant optimistic state updates and feedback toasts.
+- [x] **Header Component (`components/header.tsx`)**:
+  - High-contrast editorial brand lockup with pill geometry, sprint label, and dark/light mode toggle.
+
+#### Remaining Tasks (for full backend integration):
+- [ ] Connect board view to `GET /boards/:id` live API.
+- [ ] Connect drag-and-drop drop event to `PATCH /tasks/:id/move` backend endpoint.
+- [ ] Connect board sharing to `POST /boards/:id/members` backend endpoint.
 
 ---
 
@@ -178,9 +180,9 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 | **Backend** | Tasks CRUD | **Pending** |
 | **Backend** | Task Movement & Reordering API | **Pending** |
 | **Frontend** | Base UI primitives & Tailwind v4 | **Completed** |
+| **Frontend** | Interactive Kanban Board View | **Completed (Static)** |
+| **Frontend** | Drag-and-Drop Task Movement & Reordering | **Completed (Client-side)** |
+| **Frontend** | Board Sharing Dialog | **Completed (Static)** |
 | **Frontend** | API Client & Auth Provider | **Pending** |
 | **Frontend** | Login & Register Pages | **Pending** |
 | **Frontend** | Boards Dashboard & Create Board | **Pending** |
-| **Frontend** | Board Sharing Dialog | **Pending** |
-| **Frontend** | Interactive Kanban Board View | **Pending** |
-| **Frontend** | Drag-and-Drop Task Movement & Reordering | **Pending** |
