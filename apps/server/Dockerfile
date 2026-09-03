@@ -1,11 +1,11 @@
 FROM node:20-alpine AS base
-RUN npm install -g bun
+RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
 FROM base AS builder
 COPY . .
-RUN if [ -f bun.lock ]; then bun install --frozen-lockfile; else bun install; fi
-RUN bun run --filter server build
+RUN pnpm install
+RUN pnpm --filter server build
 
 FROM base AS runner
 WORKDIR /app

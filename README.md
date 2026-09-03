@@ -7,7 +7,7 @@ A full-stack collaborative Kanban board application built for the **Webbriks Tec
 - **Frontend**: Next.js 16 (App Router), React 19, Tailwind CSS v4, shadcn/Radix UI
 - **Backend**: NestJS 11 (Express 5, TypeScript)
 - **Database**: PostgreSQL 16 with Prisma ORM
-- **Monorepo & DevOps**: Turborepo, Bun, Docker Compose
+- **Monorepo & DevOps**: Turborepo, pnpm, Docker Compose
 
 ---
 
@@ -30,12 +30,12 @@ webbriks-technical-assessment/
 ## Getting Started
 
 ### Prerequisites
-- [Bun](https://bun.sh/) (v1.3+)
+- [pnpm](https://pnpm.io/) (v11+) and [Node.js](https://nodejs.org/) (v20+)
 - [Podman](https://podman.io/) or [Docker](https://www.docker.com/) (for containerized PostgreSQL)
 
 ### 1. Installation
 ```sh
-bun install
+pnpm install
 ```
 
 ### 2. Environment Configuration
@@ -54,13 +54,13 @@ NEXT_PUBLIC_SERVER_URL=http://localhost:3000
 ### 3. Database Setup (Podman / Docker)
 Start the local PostgreSQL container and push the schema:
 ```sh
-bun db:start
-bun db:push
+pnpm db:start
+pnpm db:push
 ```
 
 ### 4. Run Development Servers
 ```sh
-bun dev
+pnpm dev
 ```
 - **Web App**: [http://localhost:3001](http://localhost:3001)
 - **API Server & Swagger**: [http://localhost:3000](http://localhost:3000) (Swagger UI: [http://localhost:3000/api](http://localhost:3000/api))
@@ -71,7 +71,7 @@ bun dev
 
 To visually inspect and manage users and database records in your browser:
 ```sh
-bun db:studio
+pnpm db:studio
 ```
 
 ---
@@ -80,15 +80,15 @@ bun db:studio
 
 | Command | Description |
 |---|---|
-| `bun dev` | Run all applications concurrently |
-| `bun dev:web` | Run only the Next.js frontend |
-| `bun dev:server` | Run only the NestJS backend |
-| `bun db:start` | Start local PostgreSQL container (Podman/Docker) |
-| `bun db:stop` | Stop PostgreSQL container |
-| `bun db:status` | Check PostgreSQL container status |
-| `bun db:logs` | View PostgreSQL container logs |
-| `bun db:studio` | Open Prisma Studio UI to inspect users & records |
-| `bun db:push` | Push schema changes directly to PostgreSQL |
-| `bun db:generate` | Generate Prisma client types |
-| `bun check-types` | Run type checking across all workspaces |
-| `bun build` | Build all apps for production |
+| `pnpm dev` | Run all applications concurrently |
+| `pnpm dev:web` | Run only the Next.js frontend |
+| `pnpm dev:server` | Run only the NestJS backend |
+| `pnpm db:start` | Start local PostgreSQL container (Podman/Docker) |
+| `pnpm db:stop` | Stop PostgreSQL container |
+| `pnpm db:status` | Check PostgreSQL container status |
+| `pnpm db:logs` | View PostgreSQL container logs |
+| `pnpm db:studio` | Open Prisma Studio UI to inspect users & records |
+| `pnpm db:push` | Push schema changes directly to PostgreSQL |
+| `pnpm db:generate` | Generate Prisma client types |
+| `pnpm check-types` | Run type checking across all workspaces |
+| `pnpm build` | Build all apps for production |

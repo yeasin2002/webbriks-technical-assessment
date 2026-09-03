@@ -21,7 +21,7 @@ Kanban systems require clear boundaries between collaboration, access control, a
 ## 2. Tech
 
 ### Monorepo & Core Stack
-- **Package Manager & Runtime**: [Bun](https://bun.sh/) (v1.3+) workspace runner with Node.js runtime.
+- **Package Manager & Runtime**: [pnpm](https://pnpm.io/) (v11+) workspace runner with Node.js runtime.
 - **Monorepo Engine**: [Turborepo](https://turbo.build/) (v2) managing task pipelines and caching.
 - **Language**: TypeScript (strict mode across all packages and apps).
 
@@ -34,7 +34,7 @@ Kanban systems require clear boundaries between collaboration, access control, a
   - **Interactions**: Modern drag-and-drop task movement and board management.
 - **Backend (`apps/server`)**:
   - **Framework**: NestJS 11 running on Express 5 platform.
-  - **Compiler / Tooling**: SWC builder for fast builds and hot-reloading with Bun.
+  - **Compiler / Tooling**: SWC builder for fast builds and hot-reloading with Nest CLI.
   - **Architecture**: Modular structure (Controllers, Services, Modules, Guards, DTOs).
 - **Database & Data Layer (`packages/db`)**:
   - **Database Engine**: PostgreSQL 16.
@@ -47,7 +47,7 @@ Kanban systems require clear boundaries between collaboration, access control, a
   - **Git Hooks**: Lefthook for pre-commit linting and type checks.
 
 ### Current Working State
-- Monorepo workspace orchestration configured with Turborepo and Bun.
+- Monorepo workspace orchestration configured with Turborepo and pnpm.
 - Type-safe environment variables configured in `packages/env` for both server and web.
 - PostgreSQL database service defined in Docker Compose and connected to `packages/db` via Prisma.
 - NestJS backend scaffolded in `apps/server` with initial health controller, CORS configuration, and SWC build pipeline.
@@ -117,25 +117,25 @@ webbriks-technical-assessment/
 ## 4. Development Workflow & Commands
 
 ### Common Commands
-- `bun install`: Install all workspace dependencies.
-- `bun dev`: Start all apps concurrently in development mode via Turborepo.
-- `bun dev:server`: Start only the NestJS backend in watch mode.
-- `bun dev:web`: Start only the Next.js frontend on port 3001.
-- `bun check-types`: Run type checks across all workspaces.
-- `bun build`: Build all applications for production.
+- `pnpm install`: Install all workspace dependencies.
+- `pnpm dev`: Start all apps concurrently in development mode via Turborepo.
+- `pnpm dev:server`: Start only the NestJS backend in watch mode.
+- `pnpm dev:web`: Start only the Next.js frontend on port 3001.
+- `pnpm check-types`: Run type checks across all workspaces.
+- `pnpm build`: Build all applications for production.
 
 ### Database & Container Operations (Docker / Podman)
-- `bun db:start`: Start the local PostgreSQL container via Podman/Docker.
-- `bun db:stop`: Stop the PostgreSQL container.
-- `bun db:status`: Inspect container status (`webbriks-postgres`).
-- `bun db:logs`: View live container logs.
-- `bun db:down`: Remove the PostgreSQL container.
-- `bun db:psql`: Open an interactive `psql` shell in the database container.
-- `bun db:generate`: Generate the Prisma client.
-- `bun db:push`: Push Prisma schema changes directly to the PostgreSQL database.
-- `bun db:migrate`: Run database migrations.
-- `bun db:studio`: Open Prisma Studio web UI to inspect all users and database tables.
+- `pnpm db:start`: Start the local PostgreSQL container via Podman/Docker.
+- `pnpm db:stop`: Stop the PostgreSQL container.
+- `pnpm db:status`: Inspect container status (`webbriks-postgres`).
+- `pnpm db:logs`: View live container logs.
+- `pnpm db:down`: Remove the PostgreSQL container.
+- `pnpm db:psql`: Open an interactive `psql` shell in the database container.
+- `pnpm db:generate`: Generate the Prisma client.
+- `pnpm db:push`: Push Prisma schema changes directly to the PostgreSQL database.
+- `pnpm db:migrate`: Run database migrations.
+- `pnpm db:studio`: Open Prisma Studio web UI to inspect all users and database tables.
 
 ### Docker / Podman Environment
-- `docker compose up -d db` or `bun db:start`: Start only the PostgreSQL database.
+- `docker compose up -d db` or `pnpm db:start`: Start only the PostgreSQL database.
 - `docker compose up --build`: Build and run the entire full-stack application (web, server, db).

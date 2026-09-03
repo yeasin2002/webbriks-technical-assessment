@@ -1,13 +1,14 @@
-FROM oven/bun:1 AS base
+FROM node:20-alpine AS base
+RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
 FROM base AS builder
 COPY . .
-RUN if [ -f bun.lock ]; then bun install --frozen-lockfile; else bun install; fi
+RUN pnpm install
 ARG NEXT_PUBLIC_SERVER_URL=http://localhost:3000
 ENV NEXT_PUBLIC_SERVER_URL=${NEXT_PUBLIC_SERVER_URL}
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN bun run --filter web build
+RUN pnpm --filter web build
 
 FROM node:20-alpine AS runner
 WORKDIR /app
