@@ -4,6 +4,20 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 
 ---
 
+## 🎯 Assessment Core Requirements Mapping
+
+| Core Requirement | Spec Details | Current Status |
+|---|---|---|
+| **1. Authentication & Collaboration** | Token-based auth, user registration & login | ✅ **Completed** (`/auth/register`, `/auth/login`, `/auth/me`, JWT Guard) |
+| **1. Authentication & Collaboration** | Board sharing with registered collaborators & access control rules | ⏳ **In Progress** (Schema & Frontend UI complete; Backend endpoints pending) |
+| **2. Workflow Management** | Full CRUD for Boards, Columns, and Tasks | ⏳ **In Progress** (Schema & Frontend Store complete; Backend modules pending) |
+| **2. Task Movement API** | Reorder within column & move across columns to position index | ⏳ **In Progress** (Schema & Frontend Drag-and-Drop complete; Backend transactional endpoint pending) |
+| **2. Order Consistency** | Conflict-free atomic transactional positioning | ⏳ **Pending** (Backend `prisma.$transaction` ordering implementation) |
+| **3. Frontend** | Interactive board view with Drag-and-Drop task movement | ✅ **Completed** (Native HTML5 drag-and-drop, optimistic reordering, column & task management) |
+| **4. Submission & Deliverables** | Single repo, setup instructions, Docker/Podman compose | ✅ **Completed** (Turborepo, Bun/pnpm, Docker Compose, Swagger UI, README.md) |
+
+---
+
 ## PART 1: Backend (`apps/server` & `packages/db`)
 
 ### 1. Database & Schema Modeling (`packages/db`)
@@ -15,10 +29,10 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 - [x] **BoardMember / Sharing Model (`schema.prisma`)**: `id`, `boardId`, `userId`, `@@unique([boardId, userId])` to prevent duplicate membership.
 - [x] **Column Model (`schema.prisma`)**: `id`, `name`, `order` (float for flexible ordering), `boardId`, relation to `Task` list.
 - [x] **Task Model (`schema.prisma`)**: `id`, `title`, `description`, `order` (position index), `columnId` (relation to `Column`).
-- [x] **Database Migration/Push Tooling**: Executed `pnpm db:push` to sync PostgreSQL and generated client via `pnpm db:generate`.
+- [x] **Database Migration/Push Tooling**: Executed `bun db:push` to sync PostgreSQL and generated client via `bun db:generate`.
 
 #### Remaining Tasks:
-- *(All tasks completed)*
+- *(All database schema modeling tasks completed)*
 
 ---
 
@@ -29,6 +43,7 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 - [x] **User Login (`POST /auth/login`)**: Credential verification, JWT access token generation.
 - [x] **Current User Profile (`GET /auth/me`)**: Protected endpoint with `JwtAuthGuard` and `@CurrentUser()` decorator.
 - [x] **JWT Strategy & Module**: `JwtModule` configured with environment secrets and payload verification.
+- [x] **Swagger OpenAPI Specification**: Interactive API documentation configured with Bearer Auth at `http://localhost:3000/api`.
 
 #### Remaining Tasks:
 - [ ] **Board Access Guard / Verification Helper**:
@@ -67,7 +82,7 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 - [ ] **`POST /boards/:boardId/columns`**: Create a new column in a board (e.g., "To Do", "In Progress", "Done") with calculated order index.
 - [ ] **`PATCH /columns/:id`**: Rename or update a column.
 - [ ] **`DELETE /columns/:id`**: Delete a column and its tasks.
-- [ ] **`PATCH /columns/:id/reorder`**: Reorder columns within a board (optional/standard for Kanban).
+- [ ] **`PATCH /columns/:id/reorder`**: Reorder columns within a board.
 
 ---
 
@@ -94,59 +109,32 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 ### 1. API Client & Authentication State (`apps/web`)
 
 #### Completed Tasks:
-- [x] **Design Primitive Setup**: Tailwind CSS v4, Lucide/Tabler Icons, shadcn UI components (`button`, `card`, `input`, `dropdown-menu`, etc.).
+- [x] **Design Primitive Setup**: Tailwind CSS v4, Tabler Icons, Radix/shadcn UI components (`button`, `card`, `input`, `dropdown-menu`, etc.).
 - [x] **Theme Switcher**: Dark/Light mode provider setup.
-
-#### Remaining Tasks:
-- [ ] **API Client / Fetch Wrapper (`lib/api.ts`)**:
-  - Base HTTP fetch utility attaching Bearer JWT token from storage/cookie.
-  - Centralized error and response handling.
-- [ ] **Auth Context / State Management (`lib/auth-context.tsx`)**:
-  - Login, register, logout functions.
-  - Persisting auth token and user state (`localStorage` / cookies).
-  - Protected route redirection (redirect to `/login` if unauthenticated).
+- [x] **API Client / Fetch Wrapper (`lib/api.ts`)**:
+  - Lightweight `apiFetch` wrapper with automatic JWT Bearer headers and error handling.
+- [x] **Auth State Management (`store/auth-store.ts`)**:
+  - Zustand auth store with localStorage persistence for `user` and `token`.
+  - Login, register, logout functions with session restoration.
 
 ---
 
 ### 2. Authentication Views (`apps/web`)
 
 #### Completed Tasks:
-- [x] **API Client & Auth Store (`lib/api.ts`, `store/auth-store.ts`)**:
-  - Lightweight `apiFetch` wrapper with automatic JWT Bearer headers and error handling.
-  - Zustand auth store with localStorage persistence for `user` and `token`.
 - [x] **Register Page (`/register`)**:
-  - Simple form: Name (optional), Email, Password (min 6 chars).
+  - Form validation: Name (optional), Email, Password (min 6 chars).
   - Calls `POST /auth/register`, sets token/user state, and redirects to board view.
 - [x] **Login Page (`/login`)**:
-  - Simple form: Email, Password.
+  - Form validation: Email, Password.
   - Calls `POST /auth/login`, sets token/user state, and redirects to board view.
 - [x] **Navigation Header Integration (`components/header.tsx`)**:
   - Displays authenticated user initials and email when logged in with a "Sign Out" button.
   - Displays "Sign In" and "Register" links when unauthenticated.
 
-#### Remaining Tasks:
-- *(None — Auth views and integration complete)*
-
 ---
 
-### 3. Board Management & Dashboard (`apps/web`)
-
-#### Completed Tasks:
-- *(None yet — UI pages pending)*
-
-#### Remaining Tasks:
-- [ ] **Boards Dashboard (`/boards` or `/`)**:
-  - Grid/list of boards owned by user and shared with user.
-  - "Create New Board" button and simple modal/form.
-  - Quick action to delete or open each board.
-- [ ] **Board Sharing Modal (`components/board/share-modal.tsx`)**:
-  - List current board members.
-  - Input field to invite/share board with a user via email.
-  - Revoke member access button (visible to owner).
-
----
-
-### 4. Kanban Board View & Drag-and-Drop (`apps/web`)
+### 3. Kanban Board View & Drag-and-Drop (`apps/web`)
 
 #### Completed Tasks:
 - [x] **Interactive Kanban Board View (`components/board/kanban-board.tsx`)**:
@@ -166,6 +154,18 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 - [ ] Connect board view to `GET /boards/:id` live API.
 - [ ] Connect drag-and-drop drop event to `PATCH /tasks/:id/move` backend endpoint.
 - [ ] Connect board sharing to `POST /boards/:id/members` backend endpoint.
+- [ ] Connect column and task creations/updates/deletions to live backend endpoints.
+
+---
+
+## PART 3: DevOps & Local Tooling
+
+#### Completed Tasks:
+- [x] **Multi-Service Docker Compose** ([docker-compose.yml](file:///d:/programming/assignment/webbriks-technical-assessment/docker-compose.yml)): PostgreSQL, NestJS API, and Next.js frontend with health checks.
+- [x] **Server Docker Compose** ([apps/server/docker-compose.yml](file:///d:/programming/assignment/webbriks-technical-assessment/apps/server/docker-compose.yml)): Standalone PostgreSQL database service for local development.
+- [x] **Podman CLI Integration**: Custom scripts in `package.json` for starting, stopping, checking status, viewing logs, and dropping the container.
+- [x] **Prisma Studio**: `bun db:studio` for visual browser inspection of database tables and records.
+- [x] **Type-Safe Environment**: `@webbriks-technical-assessment/env` validating configuration across client and server.
 
 ---
 
@@ -173,17 +173,19 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 
 | Area | Feature | Status |
 |---|---|---|
-| **Backend** | Auth (Register, Login, Me) | **Completed** |
-| **Backend** | Prisma Models (Board, Member, Column, Task) | **Completed** |
-| **Backend** | Boards CRUD & Access Control | **Pending** |
-| **Backend** | Board Sharing & Members API | **Pending** |
-| **Backend** | Columns CRUD | **Pending** |
-| **Backend** | Tasks CRUD | **Pending** |
-| **Backend** | Task Movement & Reordering API | **Pending** |
-| **Frontend** | Base UI primitives & Tailwind v4 | **Completed** |
-| **Frontend** | API Client & Auth Provider | **Completed** |
-| **Frontend** | Login & Register Pages | **Completed** |
-| **Frontend** | Interactive Kanban Board View | **Completed (Static)** |
-| **Frontend** | Drag-and-Drop Task Movement & Reordering | **Completed (Client-side)** |
-| **Frontend** | Board Sharing Dialog | **Completed (Static)** |
-| **Frontend** | Boards Dashboard & Create Board | **Pending** |
+| **Database** | Prisma Models (`User`, `Board`, `BoardMember`, `Column`, `Task`) | ✅ **Completed** |
+| **Backend** | Auth (`/auth/register`, `/auth/login`, `/auth/me`, JWT Guard) | ✅ **Completed** |
+| **Backend** | Swagger OpenAPI Docs (`/api`) | ✅ **Completed** |
+| **Backend** | Boards CRUD & Access Control | ⏳ **Pending** |
+| **Backend** | Board Sharing & Members API | ⏳ **Pending** |
+| **Backend** | Columns CRUD | ⏳ **Pending** |
+| **Backend** | Tasks CRUD | ⏳ **Pending** |
+| **Backend** | Task Movement & Positional Reordering API | ⏳ **Pending** |
+| **Frontend** | Base UI primitives & Tailwind v4 | ✅ **Completed** |
+| **Frontend** | API Client & Zustand Auth Store | ✅ **Completed** |
+| **Frontend** | Login (`/login`) & Register (`/register`) Views | ✅ **Completed** |
+| **Frontend** | Interactive Kanban Board View | ✅ **Completed** |
+| **Frontend** | Drag-and-Drop Task Movement & Reordering | ✅ **Completed (Client Store)** |
+| **Frontend** | Board Sharing Modal | ✅ **Completed (Client Store)** |
+| **Frontend** | Live Backend API Integration for Board / Drag-and-Drop | ⏳ **Pending** |
+| **DevOps** | Docker / Podman Orchestration & Prisma Studio | ✅ **Completed** |
