@@ -223,6 +223,11 @@ export class BoardsService {
       },
     });
 
+    await prisma.board.update({
+      where: { id: boardId },
+      data: { updatedAt: new Date() },
+    });
+
     return {
       id: member.id,
       boardId: member.boardId,

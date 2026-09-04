@@ -3,20 +3,24 @@
 import React, { useState, useEffect } from "react";
 import { IconTrash, IconX } from "@tabler/icons-react";
 import { toast } from "sonner";
-import { useBoardStore } from "@/store";
+import { useDeleteTask, useMoveTask, useUpdateTask } from "@/api";
+import type { BoardColumn, BoardTask } from "@/api";
 
-export function TaskDetailModal() {
-  const task = useBoardStore((state) => state.selectedTask);
-  const columns = useBoardStore((state) => state.columns);
-  const onClose = () => useBoardStore.getState().setSelectedTask(null);
-  const updateTask = useBoardStore((state) => state.updateTask);
-  const deleteTask = useBoardStore((state) => state.deleteTask);
-  const moveTask = useBoardStore((state) => state.moveTask);
+interface TaskDetailModalProps {
+  task: BoardTask | null;
+  columns: BoardColumn[];
+  boardId: string;
+  onClose: () => void;
+}
 
+export function TaskDetailModal({ task, columns, boardId, onClose }: TaskDetailModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [columnId, setColumnId] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
+
+  const updateTaskMutation = useUpdateTask(boardId);
+  const deleteTaskMutation = useDeleteTask(boardId);
+  const moveTaskMutation = useMoveTask(boardId);
 
   useEffect(() => {
     if (task) {
@@ -34,32 +38,38 @@ export function TaskDetailModal() {
       return;
     }
 
-    setIsSaving(true);
-    try {
-      // If column changed, move to the end of the new column
-      if (columnId !== task.columnId) {
-        await moveTask(task.id, columnId, 9999);
-      }
-
-      await updateTask({
+    if (columnId !== task.columnId) {
+      moveTaskMutation.mutate({
         id: task.id,
-        title: title.trim(),
-        description: description.trim() || null,
-        columnId,
+        data: { targetColumnId: columnId, newPosition: 9999 },
       });
-
-      onClose();
-    } catch {
-      // handled in store
-    } finally {
-      setIsSaving(false);
     }
+
+    updateTaskMutation.mutate(
+      {
+        id: task.id,
+        data: {
+          title: title.trim(),
+          description: description.trim() || null,
+        },
+      },
+      {
+        onSuccess: () => {
+          onClose();
+        },
+      }
+    );
   };
 
-  const handleDelete = async () => {
-    await deleteTask(task.id);
-    onClose();
+  const handleDelete = () => {
+    deleteTaskMutation.mutate(task.id, {
+      onSuccess: () => {
+        onClose();
+      },
+    });
   };
+
+  const isSaving = updateTaskMutation.isPending || moveTaskMutation.isPending;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -75,8 +85,9 @@ export function TaskDetailModal() {
           <div className="flex items-center gap-2">
             <button
               onClick={handleDelete}
+              disabled={deleteTaskMutation.isPending}
               title="Delete task"
-              className="rounded-full p-1.5 text-neutral-400 hover:text-red-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              className="rounded-full p-1.5 text-neutral-400 hover:text-red-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors disabled:opacity-50"
             >
               <IconTrash className="size-4" />
             </button>

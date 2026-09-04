@@ -27,7 +27,8 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (isInitialized && user) {
-      router.replace("/");
+      const search = typeof window !== "undefined" ? window.location.search : "";
+      router.replace((search ? `/${search}` : "/") as any);
     }
   }, [isInitialized, user, router]);
 
@@ -50,7 +51,8 @@ export default function RegisterPage() {
       toast.success("Account created successfully!", {
         description: "Welcome to Webbriks Kanban.",
       });
-      router.replace("/");
+      const search = typeof window !== "undefined" ? window.location.search : "";
+      router.replace((search ? `/${search}` : "/") as any);
     } catch (err: any) {
       toast.error("Registration failed", {
         description: err.message || "An error occurred during registration",
@@ -171,7 +173,7 @@ export default function RegisterPage() {
         <div className="mt-6 text-center text-xs text-neutral-500 dark:text-neutral-400">
           Already have an account?{" "}
           <Link
-            href="/login"
+            href={(typeof window !== "undefined" && window.location.search ? `/login${window.location.search}` : "/login") as any}
             className="font-bold text-neutral-900 dark:text-white underline underline-offset-4 hover:no-underline"
           >
             Sign in

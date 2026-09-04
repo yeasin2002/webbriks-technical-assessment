@@ -17,7 +17,8 @@ export default function Home() {
 
   useEffect(() => {
     if (isInitialized && !user) {
-      router.replace("/login");
+      const search = typeof window !== "undefined" ? window.location.search : "";
+      router.replace((search ? `/login${search}` : "/login") as any);
     }
   }, [isInitialized, user, router]);
 

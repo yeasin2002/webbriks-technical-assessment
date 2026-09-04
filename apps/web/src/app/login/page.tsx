@@ -26,7 +26,8 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isInitialized && user) {
-      router.replace("/");
+      const search = typeof window !== "undefined" ? window.location.search : "";
+      router.replace((search ? `/${search}` : "/") as any);
     }
   }, [isInitialized, user, router]);
 
@@ -44,7 +45,8 @@ export default function LoginPage() {
       toast.success("Welcome back!", {
         description: "You have successfully signed in.",
       });
-      router.replace("/");
+      const search = typeof window !== "undefined" ? window.location.search : "";
+      router.replace((search ? `/${search}` : "/") as any);
     } catch (err: any) {
       toast.error("Authentication failed", {
         description: err.message || "Invalid email or password",
@@ -148,7 +150,7 @@ export default function LoginPage() {
         <div className="mt-6 text-center text-xs text-neutral-500 dark:text-neutral-400">
           Don&apos;t have an account?{" "}
           <Link
-            href="/register"
+            href={(typeof window !== "undefined" && window.location.search ? `/register${window.location.search}` : "/register") as any}
             className="font-bold text-neutral-900 dark:text-white underline underline-offset-4 hover:no-underline"
           >
             Create an account

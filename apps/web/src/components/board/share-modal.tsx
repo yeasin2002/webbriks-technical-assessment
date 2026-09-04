@@ -12,7 +12,14 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
-import { useBoardStore } from "@/store";
+import { useAddBoardMember, useRemoveBoardMember } from "@/api";
+import type { BoardDetail } from "@/api";
+
+interface ShareModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  board: BoardDetail | null;
+}
 
 function getInitials(name?: string | null, email?: string): string {
   if (name?.trim()) {
@@ -28,51 +35,51 @@ function getInitials(name?: string | null, email?: string): string {
   return "U";
 }
 
-export function ShareModal() {
-  const isOpen = useBoardStore((state) => state.isShareModalOpen);
-  const onClose = () => useBoardStore.getState().setShareModalOpen(false);
-  const activeBoard = useBoardStore((state) => state.activeBoard);
-  const boardTitle = useBoardStore((state) => state.boardTitle);
-  const isOwner = useBoardStore((state) => state.isOwner);
-  const members = useBoardStore((state) => state.members);
-  const addMember = useBoardStore((state) => state.addMember);
-  const removeMember = useBoardStore((state) => state.removeMember);
-
+export function ShareModal({ isOpen, onClose, board }: ShareModalProps) {
   const [inviteEmail, setInviteEmail] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  if (!isOpen) return null;
+  const addMemberMutation = useAddBoardMember(board?.id ?? "");
+  const removeMemberMutation = useRemoveBoardMember(board?.id ?? "");
+
+  if (!isOpen || !board) return null;
+
+  const isOwner = board.isOwner;
+  const members = board.members || [];
+  const totalMembersCount = (board.owner ? 1 : 0) + members.length;
 
   const handleAddCollaborator = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail.trim()) return;
 
-    setIsSubmitting(true);
     const email = inviteEmail.trim().toLowerCase();
-    const success = await addMember(email);
-    setIsSubmitting(false);
-
-    if (success) {
-      setInviteEmail("");
-    }
+    addMemberMutation.mutate(
+      { email },
+      {
+        onSuccess: () => {
+          setInviteEmail("");
+        },
+      }
+    );
   };
 
-  const handleRemoveCollaborator = async (userId: string, name?: string | null) => {
-    await removeMember(userId);
-    toast.info(`Removed ${name ?? "collaborator"} from board`);
+  const handleRemoveCollaborator = (userId: string, name?: string | null) => {
+    removeMemberMutation.mutate(userId, {
+      onSuccess: () => {
+        toast.info(`Removed ${name ?? "collaborator"} from board`);
+      },
+    });
   };
 
   const handleCopyLink = () => {
     if (typeof window !== "undefined") {
-      navigator.clipboard.writeText(window.location.href);
+      const url = `${window.location.origin}/?board=${board.id}`;
+      navigator.clipboard.writeText(url);
       setCopied(true);
       toast.success("Board invite link copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
     }
   };
-
-  const totalMembersCount = (activeBoard?.owner ? 1 : 0) + (members?.length || 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -91,7 +98,7 @@ export function ShareModal() {
                 Share Board
               </h2>
               <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                {boardTitle} • Multi-tenant access control
+                {board.title} • Multi-tenant access control
               </p>
             </div>
           </div>
@@ -119,11 +126,11 @@ export function ShareModal() {
             </div>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={addMemberMutation.isPending}
               className="inline-flex items-center gap-1.5 rounded-full bg-[#111111] dark:bg-white text-white dark:text-black px-4 py-2 text-xs font-semibold hover:bg-neutral-800 dark:hover:bg-neutral-200 disabled:opacity-50 transition-colors shadow-sm shrink-0"
             >
               <IconUserPlus className="size-3.5" />
-              <span>{isSubmitting ? "Inviting..." : "Invite"}</span>
+              <span>{addMemberMutation.isPending ? "Inviting..." : "Invite"}</span>
             </button>
           </form>
         ) : (
@@ -141,21 +148,21 @@ export function ShareModal() {
 
           <div className="divide-y divide-neutral-100 dark:divide-neutral-800/80 max-h-56 overflow-y-auto">
             {/* Board Owner */}
-            {activeBoard?.owner && (
+            {board.owner && (
               <div className="flex items-center justify-between py-2.5">
                 <div className="flex items-center gap-3">
                   <div className="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900">
-                    {getInitials(activeBoard.owner.name, activeBoard.owner.email)}
+                    {getInitials(board.owner.name, board.owner.email)}
                   </div>
                   <div>
                     <div className="text-sm font-semibold text-neutral-900 dark:text-white flex items-center gap-1.5">
-                      {activeBoard.owner.name || activeBoard.owner.email}
+                      {board.owner.name || board.owner.email}
                       <span title="Board Owner">
                         <IconShieldCheck className="size-4 text-emerald-600" />
                       </span>
                     </div>
                     <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                      {activeBoard.owner.email}
+                      {board.owner.email}
                     </div>
                   </div>
                 </div>
@@ -191,6 +198,7 @@ export function ShareModal() {
                   {isOwner && (
                     <button
                       onClick={() => handleRemoveCollaborator(member.userId, member.user?.name || member.user?.email)}
+                      disabled={removeMemberMutation.isPending}
                       title="Revoke access"
                       className="rounded-full p-1.5 text-neutral-400 hover:text-red-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                     >

@@ -94,8 +94,13 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 #### Completed Tasks:
 - [x] **Design Primitive Setup**: Tailwind CSS v4, Tabler Icons, Radix/shadcn UI components (`button`, `card`, `input`, `dropdown-menu`, etc.).
 - [x] **Theme Switcher**: Dark/Light mode provider setup.
-- [x] **API Client / Fetch Wrapper (`lib/api.ts`)**:
-  - Lightweight `apiFetch` wrapper with automatic JWT Bearer headers and error handling.
+- [x] **Ky HTTP Client (`lib/ky.ts`)**:
+  - Configured Ky client with `prefix` pointing to NestJS server, automatic Bearer JWT header injection via `beforeRequest` hook, and standardized error parsing (`getApiErrorMessage`).
+- [x] **Two-Tier TanStack Query Architecture (`src/api/`)**:
+  - Layer 1 (`query-list/`): Pure API fetchers for `auth`, `boards`, `columns`, and `tasks`.
+  - Layer 2 (`api-hooks/`): Declarative React Query hooks (`useBoards`, `useBoard`, `useCreateBoard`, `useUpdateBoard`, `useDeleteBoard`, `useCreateColumn`, `useDeleteColumn`, `useCreateTask`, `useUpdateTask`, `useDeleteTask`, `useMoveTask`, `useAddBoardMember`, `useRemoveBoardMember`).
+  - **3-Second Short Polling**: Implemented `refetchInterval: 3000` in `useBoard(id)` so multi-user collaborator updates sync automatically without manual page reloads.
+  - **Optimistic Drag-and-Drop**: `useMoveTask` applies instant optimistic updates to React Query board cache with rollback on failure.
 - [x] **Auth State Management (`store/auth-store.ts`)**:
   - Zustand auth store with localStorage persistence for `user` and `token`.
   - Login, register, logout functions with session restoration.
@@ -121,22 +126,24 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 
 #### Completed Tasks:
 - [x] **Interactive Kanban Board View (`components/board/kanban-board.tsx`)**:
-  - Columns layout, board header with sprint indicator, search input, and priority filter chips.
+  - Responsive multi-column layout, board switcher dropdown, sprint indicator, search filter, and column management.
+  - Driven by `useBoard(activeBoardId)` with 3-second short polling.
+  - URL query parameter sync (`?board=<id>`) for direct board bookmarking and sharing.
 - [x] **Task Card Component (`components/board/task-card.tsx`)**:
-  - Clean card with title, description, drag handle, and delete.
+  - Clean card with title, description, drag handle, and delete button.
 - [x] **Board Sharing Modal (`components/board/share-modal.tsx`)**:
-  - Member access list, role indicators (Owner vs Collaborator), email invitation bar, and copy link action.
+  - Member access list, role badges (Owner vs Collaborator), email invitation bar, copy direct board URL, and member removal.
+  - Powered by `useAddBoardMember` and `useRemoveBoardMember`.
 - [x] **Task Details Inspection Modal (`components/board/task-detail-modal.tsx`)**:
   - Task title, description editor, column selector, and delete.
-- [x] **Client-Side Drag-and-Drop Reordering**:
-  - Native drag-and-drop between columns and reordering with instant optimistic state updates and feedback toasts.
+  - Powered by `useUpdateTask`, `useDeleteTask`, and `useMoveTask`.
+- [x] **Optimistic Drag-and-Drop Reordering**:
+  - Native HTML5 drag-and-drop between columns and reordering with instant optimistic cache updates.
 - [x] **Header Component (`components/header.tsx`)**:
   - High-contrast editorial brand lockup with pill geometry, user avatar, and dark/light mode toggle.
-- [x] **Live Backend API Integration (`store/board-store.ts`)**:
-  - Connected board view to `GET /boards` and `GET /boards/:id` live API.
-  - Connected drag-and-drop drop event to `PATCH /tasks/:id/move` backend endpoint.
-  - Connected board sharing to `POST /boards/:id/members` and `DELETE /boards/:id/members/:userId` backend endpoints.
-  - Connected column and task creations/updates/deletions to live backend endpoints.
+- [x] **Live Backend API Integration (`src/api/`)**:
+  - Fully migrated from manual Zustand board store to TanStack Query + Ky.
+  - Direct integration with all 11 backend endpoints (`/boards`, `/boards/:id`, `/boards/:id/members`, `/columns`, `/tasks`, `/tasks/:id/move`, etc.).
 
 ---
 
@@ -165,10 +172,10 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 | **Backend** | Task Movement & Positional Reordering Engine (`prisma.$transaction`) | ✅ **Completed** |
 | **Backend** | Swagger OpenAPI Docs (`/api`) | ✅ **Completed** |
 | **Frontend** | Base UI primitives & Tailwind v4 | ✅ **Completed** |
-| **Frontend** | API Client & Zustand Auth Store | ✅ **Completed** |
+| **Frontend** | Ky HTTP Client & Zustand Auth Store | ✅ **Completed** |
 | **Frontend** | Login (`/login`) & Register (`/register`) Views | ✅ **Completed** |
 | **Frontend** | Interactive Kanban Board View | ✅ **Completed** |
 | **Frontend** | Drag-and-Drop Task Movement & Reordering | ✅ **Completed** |
-| **Frontend** | Board Sharing Modal | ✅ **Completed** |
-| **Frontend** | Live Backend API Integration | ✅ **Completed** |
+| **Frontend** | Board Sharing Modal & Collaborator Invites | ✅ **Completed** |
+| **Frontend** | TanStack Query + Ky Integration with 3s Polling | ✅ **Completed** |
 | **DevOps** | Docker / Podman Orchestration & Prisma Studio | ✅ **Completed** |
