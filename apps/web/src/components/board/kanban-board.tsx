@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
+  IconChevronDown,
+  IconLayoutKanban,
   IconPlus,
   IconSearch,
   IconShare,
@@ -17,10 +19,23 @@ import type { Task } from "./types";
 
 export function KanbanBoard() {
   const user = useAuthStore((state) => state.user);
+
+  // Board Store State & Actions
+  const boards = useBoardStore((state) => state.boards);
+  const activeBoard = useBoardStore((state) => state.activeBoard);
+  const boardTitle = useBoardStore((state) => state.boardTitle);
+  const isOwner = useBoardStore((state) => state.isOwner);
+  const isLoading = useBoardStore((state) => state.isLoading);
   const columns = useBoardStore((state) => state.columns);
   const tasks = useBoardStore((state) => state.tasks);
   const searchQuery = useBoardStore((state) => state.searchQuery);
   const setSearchQuery = useBoardStore((state) => state.setSearchQuery);
+
+  const fetchBoards = useBoardStore((state) => state.fetchBoards);
+  const selectBoard = useBoardStore((state) => state.selectBoard);
+  const createBoard = useBoardStore((state) => state.createBoard);
+  const deleteBoard = useBoardStore((state) => state.deleteBoard);
+
   const addingToColumnId = useBoardStore((state) => state.addingToColumnId);
   const setAddingToColumnId = useBoardStore((state) => state.setAddingToColumnId);
   const dragOverColumnId = useBoardStore((state) => state.dragOverColumnId);
@@ -41,6 +56,17 @@ export function KanbanBoard() {
 
   const [isAddingColumn, setIsAddingColumn] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
+
+  const [isCreatingBoard, setIsCreatingBoard] = useState(false);
+  const [newBoardTitle, setNewBoardTitle] = useState("");
+  const [isBoardDropdownOpen, setIsBoardDropdownOpen] = useState(false);
+
+  // Load user boards on mount
+  useEffect(() => {
+    if (user) {
+      fetchBoards();
+    }
+  }, [user, fetchBoards]);
 
   // Drag and Drop Handlers
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, task: Task) => {
@@ -69,74 +95,211 @@ export function KanbanBoard() {
     }
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetColumnId: string) => {
+  const handleDrop = async (
+    e: React.DragEvent<HTMLDivElement>,
+    targetColumnId: string,
+    targetIndex?: number
+  ) => {
     e.preventDefault();
     setDragOverColumnId(null);
 
     if (!draggedTask) return;
+
+    const columnTasks = tasks
+      .filter((t) => t.columnId === targetColumnId)
+      .sort((a, b) => a.order - b.order);
+
+    const newPosition =
+      typeof targetIndex === "number" ? targetIndex : columnTasks.length;
+
+    // If dropped in same column at same position, skip
     if (draggedTask.columnId === targetColumnId) {
-      setDraggedTask(null);
-      return;
+      const currentIndex = columnTasks.findIndex((t) => t.id === draggedTask.id);
+      if (currentIndex === newPosition) {
+        setDraggedTask(null);
+        return;
+      }
     }
 
     const targetColumn = columns.find((c) => c.id === targetColumnId);
-    moveTask(draggedTask.id, targetColumnId);
-
-    toast.success(`Moved to ${targetColumn?.name ?? targetColumnId}`);
+    const movingTaskId = draggedTask.id;
     setDraggedTask(null);
+
+    await moveTask(movingTaskId, targetColumnId, newPosition);
+    toast.success(`Task moved to ${targetColumn?.name ?? "column"}`);
   };
 
   // Task Creation Handler
-  const handleCreateTask = (columnId: string) => {
+  const handleCreateTask = async (columnId: string) => {
     if (!newTaskTitle.trim()) return;
 
-    addTask(columnId, newTaskTitle.trim(), newTaskDescription.trim());
+    await addTask(columnId, newTaskTitle.trim(), newTaskDescription.trim());
     setNewTaskTitle("");
     setNewTaskDescription("");
     setAddingToColumnId(null);
-    toast.success("Task created");
   };
 
   // Column Creation Handler
-  const handleCreateColumn = () => {
+  const handleCreateColumn = async () => {
     if (!newColumnName.trim()) return;
-    addColumn(newColumnName.trim());
-    toast.success(`Column "${newColumnName.trim()}" added`);
+    await addColumn(newColumnName.trim());
     setNewColumnName("");
     setIsAddingColumn(false);
   };
 
-  const handleDeleteColumn = (columnId: string) => {
-    deleteColumn(columnId);
-    toast.info("Column deleted");
+  const handleDeleteColumn = async (columnId: string) => {
+    await deleteColumn(columnId);
+  };
+
+  // Board Creation Handler
+  const handleCreateNewBoard = async () => {
+    if (!newBoardTitle.trim()) return;
+    await createBoard(newBoardTitle.trim());
+    setNewBoardTitle("");
+    setIsCreatingBoard(false);
+    setIsBoardDropdownOpen(false);
   };
 
   // Filter Tasks by Search Query
   const filteredTasks = tasks.filter((task) => {
-    const matchesSearch =
-      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      task.title.toLowerCase().includes(q) ||
+      (task.description?.toLowerCase().includes(q) ?? false)
+    );
   });
+
+  // Initial loading state
+  if (isLoading && !activeBoard) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-white dark:bg-[#0f0f11]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="size-7 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900 dark:border-neutral-700 dark:border-t-white" />
+          <span className="text-xs font-bold uppercase tracking-widest text-neutral-400">
+            Loading Kanban Board...
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-white dark:bg-[#0f0f11]">
       {/* Board Utility Sub-Header */}
       <div className="border-b border-neutral-200/80 dark:border-neutral-800 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md px-6 py-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          {/* Board Title */}
-          <div>
+          {/* Board Title & Board Switcher */}
+          <div className="relative">
             <div className="flex items-center gap-2">
               <span className="rounded-full bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 px-2.5 py-0.5 text-[10px] font-bold tracking-widest uppercase">
-                {user ? "PERSONAL BOARD" : "BOARD"}
+                {isOwner ? "OWNER" : "COLLABORATOR"}
               </span>
               <span className="text-xs font-semibold text-neutral-400">
-                {user?.email ?? "Webbriks Assessment"}
+                {activeBoard?.owner?.email ?? user?.email}
               </span>
             </div>
-            <h1 className="mt-1 text-2xl font-black uppercase tracking-tight text-neutral-900 dark:text-white">
-              {user?.name ? `${user.name}'s Kanban Board` : "Mini Kanban Board"}
-            </h1>
+
+            {/* Board Selector Trigger */}
+            <div className="mt-1 flex items-center gap-2">
+              <button
+                onClick={() => setIsBoardDropdownOpen(!isBoardDropdownOpen)}
+                className="group flex items-center gap-2 text-left"
+              >
+                <h1 className="text-2xl font-black uppercase tracking-tight text-neutral-900 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors">
+                  {boardTitle || "Mini Kanban Board"}
+                </h1>
+                <IconChevronDown className="size-5 text-neutral-400 group-hover:text-neutral-700 dark:group-hover:text-neutral-200 transition-transform duration-200" />
+              </button>
+
+              {isOwner && boards.length > 1 && (
+                <button
+                  onClick={() => {
+                    if (activeBoard) {
+                      deleteBoard(activeBoard.id);
+                    }
+                  }}
+                  title="Delete this board"
+                  className="rounded-full p-1 text-neutral-400 hover:text-red-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                >
+                  <IconTrash className="size-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Board Dropdown Menu */}
+            {isBoardDropdownOpen && (
+              <div
+                className="absolute left-0 top-full z-50 mt-2 w-72 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-2 shadow-xl animate-in fade-in zoom-in-95 duration-150"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-neutral-400">
+                  Your Boards ({boards.length})
+                </div>
+                <div className="max-h-48 overflow-y-auto space-y-1">
+                  {boards.map((b) => (
+                    <button
+                      key={b.id}
+                      onClick={() => {
+                        selectBoard(b.id);
+                        setIsBoardDropdownOpen(false);
+                      }}
+                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-semibold transition-colors ${
+                        b.id === activeBoard?.id
+                          ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white font-bold"
+                          : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 hover:text-neutral-900 dark:hover:text-white"
+                      }`}
+                    >
+                      <span className="truncate">{b.title}</span>
+                      <span className="text-[10px] uppercase font-bold text-neutral-400">
+                        {b.isOwner ? "Owner" : "Shared"}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-2 border-t border-neutral-100 dark:border-neutral-800 pt-2">
+                  {isCreatingBoard ? (
+                    <div className="p-1">
+                      <input
+                        type="text"
+                        autoFocus
+                        placeholder="Board name..."
+                        value={newBoardTitle}
+                        onChange={(e) => setNewBoardTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleCreateNewBoard();
+                          if (e.key === "Escape") setIsCreatingBoard(false);
+                        }}
+                        className="w-full rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-950 px-2.5 py-1.5 text-xs font-semibold text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none"
+                      />
+                      <div className="mt-2 flex justify-end gap-1">
+                        <button
+                          onClick={() => setIsCreatingBoard(false)}
+                          className="rounded-full px-2 py-1 text-[10px] font-bold text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleCreateNewBoard}
+                          className="rounded-full bg-neutral-900 dark:bg-white px-2.5 py-1 text-[10px] font-bold text-white dark:text-neutral-900"
+                        >
+                          Create
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setIsCreatingBoard(true)}
+                      className="flex w-full items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
+                    >
+                      <IconPlus className="size-3.5" />
+                      <span>Create New Board</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Actions: Share & Add Task */}
@@ -197,7 +360,9 @@ export function KanbanBoard() {
       <div className="flex-1 overflow-x-auto p-6">
         <div className="flex h-full min-w-max gap-5 items-start">
           {columns.map((column) => {
-            const columnTasks = filteredTasks.filter((t) => t.columnId === column.id);
+            const columnTasks = filteredTasks
+              .filter((t) => t.columnId === column.id)
+              .sort((a, b) => a.order - b.order);
             const isDragOver = dragOverColumnId === column.id;
 
             return (
@@ -232,13 +397,15 @@ export function KanbanBoard() {
                     >
                       <IconPlus className="size-4" />
                     </button>
-                    <button
-                      onClick={() => handleDeleteColumn(column.id)}
-                      title="Delete column"
-                      className="rounded-full p-1 text-neutral-400 hover:text-red-600 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
-                    >
-                      <IconTrash className="size-3.5" />
-                    </button>
+                    {isOwner && (
+                      <button
+                        onClick={() => handleDeleteColumn(column.id)}
+                        title="Delete column"
+                        className="rounded-full p-1 text-neutral-400 hover:text-red-600 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+                      >
+                        <IconTrash className="size-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -286,17 +453,18 @@ export function KanbanBoard() {
 
                 {/* Tasks List */}
                 <div className="flex-1 overflow-y-auto space-y-2.5 pr-0.5">
-                  {columnTasks.map((task) => (
+                  {columnTasks.map((task, idx) => (
                     <TaskCard
                       key={task.id}
                       task={task}
+                      index={idx}
                       onDragStart={handleDragStart}
                       onDragEnd={handleDragEnd}
+                      onDropOnTask={(e, targetColId, targetIdx) =>
+                        handleDrop(e, targetColId, targetIdx)
+                      }
                       onClick={(t) => setSelectedTask(t)}
-                      onDelete={(id) => {
-                        deleteTask(id);
-                        toast.info("Task deleted");
-                      }}
+                      onDelete={(id) => deleteTask(id)}
                     />
                   ))}
 
@@ -328,46 +496,48 @@ export function KanbanBoard() {
           })}
 
           {/* Add New Column Box */}
-          <div className="w-80 shrink-0">
-            {isAddingColumn ? (
-              <div className="rounded-2xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-3.5 shadow-sm">
-                <input
-                  type="text"
-                  placeholder="Column name (e.g. In Review)..."
-                  autoFocus
-                  value={newColumnName}
-                  onChange={(e) => setNewColumnName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleCreateColumn();
-                    if (e.key === "Escape") setIsAddingColumn(false);
-                  }}
-                  className="w-full text-xs font-semibold text-neutral-900 dark:text-white placeholder:text-neutral-400 bg-transparent focus:outline-none"
-                />
-                <div className="mt-3 flex items-center justify-end gap-1.5 border-t border-neutral-100 dark:border-neutral-800 pt-2">
-                  <button
-                    onClick={() => setIsAddingColumn(false)}
-                    className="rounded-full px-2.5 py-1 text-[11px] font-bold text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleCreateColumn}
-                    className="rounded-full bg-[#111111] dark:bg-white px-3.5 py-1 text-[11px] font-bold text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors"
-                  >
-                    Add Column
-                  </button>
+          {isOwner && (
+            <div className="w-80 shrink-0">
+              {isAddingColumn ? (
+                <div className="rounded-2xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-3.5 shadow-sm">
+                  <input
+                    type="text"
+                    placeholder="Column name (e.g. In Review)..."
+                    autoFocus
+                    value={newColumnName}
+                    onChange={(e) => setNewColumnName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleCreateColumn();
+                      if (e.key === "Escape") setIsAddingColumn(false);
+                    }}
+                    className="w-full text-xs font-semibold text-neutral-900 dark:text-white placeholder:text-neutral-400 bg-transparent focus:outline-none"
+                  />
+                  <div className="mt-3 flex items-center justify-end gap-1.5 border-t border-neutral-100 dark:border-neutral-800 pt-2">
+                    <button
+                      onClick={() => setIsAddingColumn(false)}
+                      className="rounded-full px-2.5 py-1 text-[11px] font-bold text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleCreateColumn}
+                      className="rounded-full bg-[#111111] dark:bg-white px-3.5 py-1 text-[11px] font-bold text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors"
+                    >
+                      Add Column
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <button
-                onClick={() => setIsAddingColumn(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-neutral-300 dark:border-neutral-800 py-4 text-xs font-bold text-neutral-500 hover:border-neutral-400 dark:hover:border-neutral-600 hover:text-neutral-800 dark:hover:text-neutral-200 transition-all"
-              >
-                <IconPlus className="size-4" />
-                <span>Add Column</span>
-              </button>
-            )}
-          </div>
+              ) : (
+                <button
+                  onClick={() => setIsAddingColumn(true)}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-neutral-300 dark:border-neutral-800 py-4 text-xs font-bold text-neutral-500 hover:border-neutral-400 dark:hover:border-neutral-600 hover:text-neutral-800 dark:hover:text-neutral-200 transition-all"
+                >
+                  <IconPlus className="size-4" />
+                  <span>Add Column</span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

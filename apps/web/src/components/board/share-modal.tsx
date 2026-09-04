@@ -14,8 +14,8 @@ import {
 import { toast } from "sonner";
 import { useBoardStore } from "@/store";
 
-function getInitials(name?: string, email?: string): string {
-  if (name) {
+function getInitials(name?: string | null, email?: string): string {
+  if (name?.trim()) {
     const parts = name.trim().split(" ");
     if (parts.length >= 2) {
       return `${parts[0]?.[0] ?? ""}${parts[1]?.[0] ?? ""}`.toUpperCase();
@@ -31,36 +31,35 @@ function getInitials(name?: string, email?: string): string {
 export function ShareModal() {
   const isOpen = useBoardStore((state) => state.isShareModalOpen);
   const onClose = () => useBoardStore.getState().setShareModalOpen(false);
+  const activeBoard = useBoardStore((state) => state.activeBoard);
   const boardTitle = useBoardStore((state) => state.boardTitle);
+  const isOwner = useBoardStore((state) => state.isOwner);
   const members = useBoardStore((state) => state.members);
   const addMember = useBoardStore((state) => state.addMember);
   const removeMember = useBoardStore((state) => state.removeMember);
 
   const [inviteEmail, setInviteEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleAddCollaborator = (e: React.FormEvent) => {
+  const handleAddCollaborator = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail.trim()) return;
 
+    setIsSubmitting(true);
     const email = inviteEmail.trim().toLowerCase();
-    const success = addMember(email);
+    const success = await addMember(email);
+    setIsSubmitting(false);
 
-    if (!success) {
-      toast.error("User is already a member of this board");
-      return;
+    if (success) {
+      setInviteEmail("");
     }
-
-    setInviteEmail("");
-    toast.success(`Access granted to ${email}`, {
-      description: "User can now view and mutate tasks on this board.",
-    });
   };
 
-  const handleRemoveCollaborator = (id: string, name?: string) => {
-    removeMember(id);
+  const handleRemoveCollaborator = async (userId: string, name?: string | null) => {
+    await removeMember(userId);
     toast.info(`Removed ${name ?? "collaborator"} from board`);
   };
 
@@ -72,6 +71,8 @@ export function ShareModal() {
       setTimeout(() => setCopied(false), 2000);
     }
   };
+
+  const totalMembersCount = (activeBoard?.owner ? 1 : 0) + (members?.length || 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -102,68 +103,94 @@ export function ShareModal() {
           </button>
         </div>
 
-        {/* Invite Input Bar */}
-        <form onSubmit={handleAddCollaborator} className="mt-5 flex gap-2">
-          <div className="relative flex-1">
-            <IconMail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-neutral-400" />
-            <input
-              type="email"
-              placeholder="Enter registered user's email..."
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              className="w-full rounded-full border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 pl-10 pr-4 py-2 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:border-neutral-900 dark:focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-neutral-400 transition-all"
-            />
+        {/* Invite Input Bar (Available to Owner) */}
+        {isOwner ? (
+          <form onSubmit={handleAddCollaborator} className="mt-5 flex gap-2">
+            <div className="relative flex-1">
+              <IconMail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-neutral-400" />
+              <input
+                type="email"
+                required
+                placeholder="Enter registered user's email..."
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                className="w-full rounded-full border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 pl-10 pr-4 py-2 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:border-neutral-900 dark:focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-neutral-400 transition-all"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#111111] dark:bg-white text-white dark:text-black px-4 py-2 text-xs font-semibold hover:bg-neutral-800 dark:hover:bg-neutral-200 disabled:opacity-50 transition-colors shadow-sm shrink-0"
+            >
+              <IconUserPlus className="size-3.5" />
+              <span>{isSubmitting ? "Inviting..." : "Invite"}</span>
+            </button>
+          </form>
+        ) : (
+          <div className="mt-4 rounded-xl bg-neutral-100 dark:bg-neutral-800/60 p-3 text-xs text-neutral-600 dark:text-neutral-400">
+            You are a collaborator on this board. Only the board owner can invite new members.
           </div>
-          <button
-            type="submit"
-            className="inline-flex items-center gap-1.5 rounded-full bg-[#111111] dark:bg-white text-white dark:text-black px-4 py-2 text-xs font-semibold hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors shadow-sm shrink-0"
-          >
-            <IconUserPlus className="size-3.5" />
-            <span>Invite</span>
-          </button>
-        </form>
+        )}
 
         {/* Member List Section */}
         <div className="mt-6">
           <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-3">
-            <span>Members with Access ({members.length})</span>
+            <span>Members with Access ({totalMembersCount})</span>
             <span>Role</span>
           </div>
 
           <div className="divide-y divide-neutral-100 dark:divide-neutral-800/80 max-h-56 overflow-y-auto">
-            {members.map((member) => (
-              <div key={member.id} className="flex items-center justify-between py-2.5">
+            {/* Board Owner */}
+            {activeBoard?.owner && (
+              <div className="flex items-center justify-between py-2.5">
                 <div className="flex items-center gap-3">
                   <div className="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900">
-                    {getInitials(member.name, member.email)}
+                    {getInitials(activeBoard.owner.name, activeBoard.owner.email)}
                   </div>
                   <div>
                     <div className="text-sm font-semibold text-neutral-900 dark:text-white flex items-center gap-1.5">
-                      {member.name || member.email}
-                      {member.role === "OWNER" && (
-                        <span title="Board Owner">
-                          <IconShieldCheck className="size-4 text-emerald-600" />
-                        </span>
-                      )}
+                      {activeBoard.owner.name || activeBoard.owner.email}
+                      <span title="Board Owner">
+                        <IconShieldCheck className="size-4 text-emerald-600" />
+                      </span>
                     </div>
-                    <div className="text-xs text-neutral-500 dark:text-neutral-400">{member.email}</div>
+                    <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                      {activeBoard.owner.email}
+                    </div>
+                  </div>
+                </div>
+
+                <span className="rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white px-2.5 py-0.5 text-[11px] font-bold tracking-wider">
+                  OWNER
+                </span>
+              </div>
+            )}
+
+            {/* Collaborator Members */}
+            {members.map((member) => (
+              <div key={member.id} className="flex items-center justify-between py-2.5">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900">
+                    {getInitials(member.user?.name, member.user?.email)}
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-neutral-900 dark:text-white flex items-center gap-1.5">
+                      {member.user?.name || member.user?.email}
+                    </div>
+                    <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                      {member.user?.email}
+                    </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-wider ${
-                      member.role === "OWNER"
-                        ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white font-bold"
-                        : "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
-                    }`}
-                  >
-                    {member.role}
+                  <span className="rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 px-2.5 py-0.5 text-[11px] font-semibold tracking-wider">
+                    COLLABORATOR
                   </span>
 
-                  {member.role !== "OWNER" && (
+                  {isOwner && (
                     <button
-                      onClick={() => handleRemoveCollaborator(member.id, member.name)}
+                      onClick={() => handleRemoveCollaborator(member.userId, member.user?.name || member.user?.email)}
                       title="Revoke access"
                       className="rounded-full p-1.5 text-neutral-400 hover:text-red-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                     >

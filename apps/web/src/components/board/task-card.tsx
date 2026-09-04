@@ -1,25 +1,65 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { IconGripVertical, IconTrash } from "@tabler/icons-react";
 import type { Task } from "./types";
 
 interface TaskCardProps {
   task: Task;
+  index: number;
   onDragStart: (e: React.DragEvent<HTMLDivElement>, task: Task) => void;
   onDragEnd: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDropOnTask?: (e: React.DragEvent<HTMLDivElement>, targetColumnId: string, targetIndex: number) => void;
   onClick: (task: Task) => void;
   onDelete?: (taskId: string) => void;
 }
 
-export function TaskCard({ task, onDragStart, onDragEnd, onClick, onDelete }: TaskCardProps) {
+export function TaskCard({
+  task,
+  index,
+  onDragStart,
+  onDragEnd,
+  onDropOnTask,
+  onClick,
+  onDelete,
+}: TaskCardProps) {
+  const [isDragOverCard, setIsDragOverCard] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverCard(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverCard(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverCard(false);
+    if (onDropOnTask) {
+      onDropOnTask(e, task.columnId, index);
+    }
+  };
+
   return (
     <div
       draggable
       onDragStart={(e) => onDragStart(e, task)}
       onDragEnd={onDragEnd}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
       onClick={() => onClick(task)}
-      className="group relative cursor-grab active:cursor-grabbing select-none rounded-xl border border-neutral-200/90 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-3.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-neutral-400 dark:hover:border-neutral-700 hover:shadow-md"
+      className={`group relative cursor-grab active:cursor-grabbing select-none rounded-xl border bg-white dark:bg-neutral-900 p-3.5 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md ${
+        isDragOverCard
+          ? "border-neutral-900 dark:border-white ring-2 ring-neutral-900/10 dark:ring-white/10"
+          : "border-neutral-200/90 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-700"
+      }`}
     >
       {/* Top row: Title and Actions */}
       <div className="flex items-start justify-between gap-2">

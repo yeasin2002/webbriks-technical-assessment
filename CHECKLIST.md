@@ -13,7 +13,7 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 | **2. Workflow Management** | Full CRUD for Boards, Columns, and Tasks | ✅ **Completed** (`BoardsModule`, `ColumnsModule`, `TasksModule`) |
 | **2. Task Movement API** | Reorder within column & move across columns to position index | ✅ **Completed** (`PATCH /tasks/:id/move` with atomic reindexing) |
 | **2. Order Consistency** | Conflict-free atomic transactional positioning | ✅ **Completed** (`prisma.$transaction` ordering engine) |
-| **3. Frontend** | Interactive board view with Drag-and-Drop task movement | ⏳ **In Progress** (UI & Client Store complete; Backend live API wiring pending) |
+| **3. Frontend** | Interactive board view with Drag-and-Drop task movement | ✅ **Completed** (Full live REST API integration, optimistic drag-and-drop, sharing & multi-tenant access) |
 | **4. Submission & Deliverables** | Single repo, setup instructions, Docker/Podman compose | ✅ **Completed** (Turborepo, Bun/pnpm, Docker Compose, Swagger UI, README.md) |
 
 ---
@@ -132,12 +132,11 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
   - Native drag-and-drop between columns and reordering with instant optimistic state updates and feedback toasts.
 - [x] **Header Component (`components/header.tsx`)**:
   - High-contrast editorial brand lockup with pill geometry, user avatar, and dark/light mode toggle.
-
-#### Remaining Tasks (for full frontend-backend integration):
-- [ ] Connect board view to `GET /boards` and `GET /boards/:id` live API.
-- [ ] Connect drag-and-drop drop event to `PATCH /tasks/:id/move` backend endpoint.
-- [ ] Connect board sharing to `POST /boards/:id/members` and `DELETE /boards/:id/members/:userId` backend endpoints.
-- [ ] Connect column and task creations/updates/deletions to live backend endpoints.
+- [x] **Live Backend API Integration (`store/board-store.ts`)**:
+  - Connected board view to `GET /boards` and `GET /boards/:id` live API.
+  - Connected drag-and-drop drop event to `PATCH /tasks/:id/move` backend endpoint.
+  - Connected board sharing to `POST /boards/:id/members` and `DELETE /boards/:id/members/:userId` backend endpoints.
+  - Connected column and task creations/updates/deletions to live backend endpoints.
 
 ---
 
@@ -169,7 +168,7 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 | **Frontend** | API Client & Zustand Auth Store | ✅ **Completed** |
 | **Frontend** | Login (`/login`) & Register (`/register`) Views | ✅ **Completed** |
 | **Frontend** | Interactive Kanban Board View | ✅ **Completed** |
-| **Frontend** | Drag-and-Drop Task Movement & Reordering | ✅ **Completed (Client Store)** |
-| **Frontend** | Board Sharing Modal | ✅ **Completed (Client Store)** |
-| **Frontend** | Live Backend API Integration | ⏳ **Next Step** |
+| **Frontend** | Drag-and-Drop Task Movement & Reordering | ✅ **Completed** |
+| **Frontend** | Board Sharing Modal | ✅ **Completed** |
+| **Frontend** | Live Backend API Integration | ✅ **Completed** |
 | **DevOps** | Docker / Podman Orchestration & Prisma Studio | ✅ **Completed** |

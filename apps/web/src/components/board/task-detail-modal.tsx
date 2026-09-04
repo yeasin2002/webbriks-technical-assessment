@@ -11,10 +11,12 @@ export function TaskDetailModal() {
   const onClose = () => useBoardStore.getState().setSelectedTask(null);
   const updateTask = useBoardStore((state) => state.updateTask);
   const deleteTask = useBoardStore((state) => state.deleteTask);
+  const moveTask = useBoardStore((state) => state.moveTask);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [columnId, setColumnId] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (task) {
@@ -26,18 +28,36 @@ export function TaskDetailModal() {
 
   if (!task) return null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title.trim()) {
       toast.error("Task title cannot be empty");
       return;
     }
-    updateTask({
-      ...task,
-      title: title.trim(),
-      description: description.trim() || undefined,
-      columnId,
-    });
-    toast.success("Task updated");
+
+    setIsSaving(true);
+    try {
+      // If column changed, move to the end of the new column
+      if (columnId !== task.columnId) {
+        await moveTask(task.id, columnId, 9999);
+      }
+
+      await updateTask({
+        id: task.id,
+        title: title.trim(),
+        description: description.trim() || null,
+        columnId,
+      });
+
+      onClose();
+    } catch {
+      // handled in store
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    await deleteTask(task.id);
     onClose();
   };
 
@@ -54,11 +74,7 @@ export function TaskDetailModal() {
           </span>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => {
-                deleteTask(task.id);
-                toast.info("Task deleted");
-                onClose();
-              }}
+              onClick={handleDelete}
               title="Delete task"
               className="rounded-full p-1.5 text-neutral-400 hover:text-red-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
             >
@@ -128,9 +144,10 @@ export function TaskDetailModal() {
           </button>
           <button
             onClick={handleSave}
-            className="rounded-full bg-[#111111] dark:bg-white px-5 py-2 text-xs font-bold text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors shadow-sm"
+            disabled={isSaving}
+            className="rounded-full bg-[#111111] dark:bg-white px-5 py-2 text-xs font-bold text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 disabled:opacity-50 transition-colors shadow-sm"
           >
-            Save Changes
+            {isSaving ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>
