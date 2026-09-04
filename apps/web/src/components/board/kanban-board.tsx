@@ -9,13 +9,14 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
-import { useBoardStore } from "@/store";
+import { useAuthStore, useBoardStore } from "@/store";
 import { TaskCard } from "./task-card";
 import { ShareModal } from "./share-modal";
 import { TaskDetailModal } from "./task-detail-modal";
 import type { Task } from "./types";
 
 export function KanbanBoard() {
+  const user = useAuthStore((state) => state.user);
   const columns = useBoardStore((state) => state.columns);
   const tasks = useBoardStore((state) => state.tasks);
   const searchQuery = useBoardStore((state) => state.searchQuery);
@@ -127,14 +128,14 @@ export function KanbanBoard() {
           <div>
             <div className="flex items-center gap-2">
               <span className="rounded-full bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 px-2.5 py-0.5 text-[10px] font-bold tracking-widest uppercase">
-                BOARD
+                {user ? "PERSONAL BOARD" : "BOARD"}
               </span>
               <span className="text-xs font-semibold text-neutral-400">
-                Webbriks Assessment
+                {user?.email ?? "Webbriks Assessment"}
               </span>
             </div>
             <h1 className="mt-1 text-2xl font-black uppercase tracking-tight text-neutral-900 dark:text-white">
-              Mini Kanban Board
+              {user?.name ? `${user.name}'s Kanban Board` : "Mini Kanban Board"}
             </h1>
           </div>
 

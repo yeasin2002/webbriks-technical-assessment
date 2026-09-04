@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { IconArrowRight, IconLayoutKanban, IconLock, IconMail } from "@tabler/icons-react";
@@ -9,6 +9,9 @@ import { useAuthStore } from "@/store";
 
 export default function LoginPage() {
   const router = useRouter();
+  const user = useAuthStore((state) => state.user);
+  const isInitialized = useAuthStore((state) => state.isInitialized);
+  const checkAuth = useAuthStore((state) => state.checkAuth);
   const login = useAuthStore((state) => state.login);
   const isLoading = useAuthStore((state) => state.isLoading);
   const error = useAuthStore((state) => state.error);
@@ -16,6 +19,16 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  useEffect(() => {
+    if (isInitialized && user) {
+      router.replace("/");
+    }
+  }, [isInitialized, user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,13 +44,26 @@ export default function LoginPage() {
       toast.success("Welcome back!", {
         description: "You have successfully signed in.",
       });
-      router.push("/");
+      router.replace("/");
     } catch (err: any) {
       toast.error("Authentication failed", {
         description: err.message || "Invalid email or password",
       });
     }
   };
+
+  if (isInitialized && user) {
+    return (
+      <div className="flex min-h-[calc(100vh-56px)] items-center justify-center p-6 bg-white dark:bg-[#0f0f11]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="size-7 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900 dark:border-neutral-700 dark:border-t-white" />
+          <span className="text-xs font-bold uppercase tracking-widest text-neutral-400">
+            Redirecting to your Kanban board...
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-[calc(100vh-56px)] items-center justify-center p-6 bg-white dark:bg-[#0f0f11]">

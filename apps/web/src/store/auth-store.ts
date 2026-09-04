@@ -19,6 +19,7 @@ interface AuthState {
   user: User | null;
   token: string | null;
   isLoading: boolean;
+  isInitialized: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
@@ -33,6 +34,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isLoading: false,
+      isInitialized: false,
       error: null,
 
       login: async (email, password) => {
@@ -47,7 +49,7 @@ export const useAuthStore = create<AuthState>()(
             localStorage.setItem("auth_token", data.token);
           }
 
-          set({ user: data.user, token: data.token, isLoading: false, error: null });
+          set({ user: data.user, token: data.token, isLoading: false, isInitialized: true, error: null });
         } catch (err) {
           const message = err instanceof ApiError ? err.message : "Failed to log in";
           set({ isLoading: false, error: message });
@@ -72,7 +74,7 @@ export const useAuthStore = create<AuthState>()(
             localStorage.setItem("auth_token", data.token);
           }
 
-          set({ user: data.user, token: data.token, isLoading: false, error: null });
+          set({ user: data.user, token: data.token, isLoading: false, isInitialized: true, error: null });
         } catch (err) {
           const message = err instanceof ApiError ? err.message : "Failed to register";
           set({ isLoading: false, error: message });
@@ -84,22 +86,23 @@ export const useAuthStore = create<AuthState>()(
         if (typeof window !== "undefined") {
           localStorage.removeItem("auth_token");
         }
-        set({ user: null, token: null, error: null });
+        set({ user: null, token: null, isInitialized: true, error: null });
       },
 
       checkAuth: async () => {
         const token = get().token || (typeof window !== "undefined" ? localStorage.getItem("auth_token") : null);
         if (!token) {
-          set({ user: null, token: null });
+          set({ user: null, token: null, isInitialized: true });
           return;
         }
 
         try {
           const data = await apiFetch<{ user: User }>("/auth/me");
-          set({ user: data.user, token });
+          set({ user: data.user, token, isInitialized: true });
         } catch {
           // Token expired or invalid
           get().logout();
+          set({ isInitialized: true });
         }
       },
 
@@ -108,6 +111,11 @@ export const useAuthStore = create<AuthState>()(
     {
       name: "webbriks-auth-storage",
       partialize: (state) => ({ user: state.user, token: state.token }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.checkAuth();
+        }
+      },
     }
   )
 );
