@@ -33,6 +33,10 @@ async function bootstrap() {
       "JWT-auth",
     )
     .addTag("Authentication", "User registration, authentication, and profile endpoints")
+    .addTag("Users", "User search and collaborator lookup endpoints")
+    .addTag("Boards", "Board creation, listing, updates, and member collaboration endpoints")
+    .addTag("Columns", "Workflow column management and reordering endpoints")
+    .addTag("Tasks", "Task creation, updates, and atomic transactional movement/reordering endpoints")
     .addTag("Health & System", "Server health and status checks")
     .build();
 

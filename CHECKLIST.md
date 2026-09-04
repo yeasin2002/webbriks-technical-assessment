@@ -9,11 +9,11 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 | Core Requirement | Spec Details | Current Status |
 |---|---|---|
 | **1. Authentication & Collaboration** | Token-based auth, user registration & login | ✅ **Completed** (`/auth/register`, `/auth/login`, `/auth/me`, JWT Guard) |
-| **1. Authentication & Collaboration** | Board sharing with registered collaborators & access control rules | ⏳ **In Progress** (Schema & Frontend UI complete; Backend endpoints pending) |
-| **2. Workflow Management** | Full CRUD for Boards, Columns, and Tasks | ⏳ **In Progress** (Schema & Frontend Store complete; Backend modules pending) |
-| **2. Task Movement API** | Reorder within column & move across columns to position index | ⏳ **In Progress** (Schema & Frontend Drag-and-Drop complete; Backend transactional endpoint pending) |
-| **2. Order Consistency** | Conflict-free atomic transactional positioning | ⏳ **Pending** (Backend `prisma.$transaction` ordering implementation) |
-| **3. Frontend** | Interactive board view with Drag-and-Drop task movement | ✅ **Completed** (Native HTML5 drag-and-drop, optimistic reordering, column & task management) |
+| **1. Authentication & Collaboration** | Board sharing with registered collaborators & access control rules | ✅ **Completed** (`/boards/:id/members`, multi-tenant access guards, User Search) |
+| **2. Workflow Management** | Full CRUD for Boards, Columns, and Tasks | ✅ **Completed** (`BoardsModule`, `ColumnsModule`, `TasksModule`) |
+| **2. Task Movement API** | Reorder within column & move across columns to position index | ✅ **Completed** (`PATCH /tasks/:id/move` with atomic reindexing) |
+| **2. Order Consistency** | Conflict-free atomic transactional positioning | ✅ **Completed** (`prisma.$transaction` ordering engine) |
+| **3. Frontend** | Interactive board view with Drag-and-Drop task movement | ⏳ **In Progress** (UI & Client Store complete; Backend live API wiring pending) |
 | **4. Submission & Deliverables** | Single repo, setup instructions, Docker/Podman compose | ✅ **Completed** (Turborepo, Bun/pnpm, Docker Compose, Swagger UI, README.md) |
 
 ---
@@ -31,9 +31,6 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 - [x] **Task Model (`schema.prisma`)**: `id`, `title`, `description`, `order` (position index), `columnId` (relation to `Column`).
 - [x] **Database Migration/Push Tooling**: Executed `bun db:push` to sync PostgreSQL and generated client via `bun db:generate`.
 
-#### Remaining Tasks:
-- *(All database schema modeling tasks completed)*
-
 ---
 
 ### 2. Authentication & Authorization (`apps/server`)
@@ -44,63 +41,49 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 - [x] **Current User Profile (`GET /auth/me`)**: Protected endpoint with `JwtAuthGuard` and `@CurrentUser()` decorator.
 - [x] **JWT Strategy & Module**: `JwtModule` configured with environment secrets and payload verification.
 - [x] **Swagger OpenAPI Specification**: Interactive API documentation configured with Bearer Auth at `http://localhost:3000/api`.
-
-#### Remaining Tasks:
-- [ ] **Board Access Guard / Verification Helper**:
-  - Reusable guard or service method ensuring the requesting user is either the **Owner** or an **Invited Member** of the board before permitting read/write operations.
-  - Reject unauthorized access with `403 Forbidden` or `404 Not Found` to prevent cross-board IDOR disclosures.
-- [ ] **Collaborator Search Endpoint (`GET /users/search?email=...`)**:
-  - Simple user lookup by email so board owners can find registered users to share boards with.
+- [x] **Board Access Guard / Verification Helper**: Reusable `validateBoardAccess` enforcing Owner vs Collaborator permissions and rejecting unauthorized cross-board access (`403 Forbidden` / `404 Not Found`).
+- [x] **Collaborator Search Endpoint (`GET /users/search?q=...`)**: User search by email and name for board invitation flows.
 
 ---
 
 ### 3. Board Management & Sharing API (`apps/server`)
 
 #### Completed Tasks:
-- *(None yet — Module scaffold pending)*
-
-#### Remaining Tasks:
-- [ ] **`BoardsModule` Scaffold**: Controller, Service, DTOs.
-- [ ] **`POST /boards`**: Create a new board (assigns authenticated user as `ownerId`).
-- [ ] **`GET /boards`**: List all boards accessible by current user (both owned boards and shared boards).
-- [ ] **`GET /boards/:id`**: Get a single board with its columns and ordered tasks (restricted to owner and shared members).
-- [ ] **`PUT` / `PATCH /boards/:id`**: Update board title / description (owner only).
-- [ ] **`DELETE /boards/:id`**: Delete board and its associated columns/tasks (owner only).
-- [ ] **`POST /boards/:id/members`**: Share board with another registered user by email / userId.
-- [ ] **`GET /boards/:id/members`**: List all members who have access to the board.
-- [ ] **`DELETE /boards/:id/members/:userId`**: Revoke access from a member (owner only).
+- [x] **`BoardsModule` Scaffold**: Controller, Service, DTOs with Zod validation.
+- [x] **`POST /boards`**: Create a new board (assigns authenticated user as `ownerId` and seeds default columns "To Do", "In Progress", "Done").
+- [x] **`GET /boards`**: List all boards accessible by current user (both owned boards and shared collaborator boards).
+- [x] **`GET /boards/:id`**: Get a single board with its columns and ordered tasks (restricted to owner and shared members).
+- [x] **`PATCH /boards/:id`**: Update board title / description (owner only).
+- [x] **`DELETE /boards/:id`**: Delete board and its associated columns/tasks (owner only, cascade delete).
+- [x] **`POST /boards/:id/members`**: Share board with another registered user by email address (owner only).
+- [x] **`GET /boards/:id/members`**: List all members who have access to the board.
+- [x] **`DELETE /boards/:id/members/:userId`**: Revoke access from a member (owner only).
 
 ---
 
 ### 4. Workflow Columns API (`apps/server`)
 
 #### Completed Tasks:
-- *(None yet — Module scaffold pending)*
-
-#### Remaining Tasks:
-- [ ] **`ColumnsModule` Scaffold**: Controller, Service, DTOs.
-- [ ] **`POST /boards/:boardId/columns`**: Create a new column in a board (e.g., "To Do", "In Progress", "Done") with calculated order index.
-- [ ] **`PATCH /columns/:id`**: Rename or update a column.
-- [ ] **`DELETE /columns/:id`**: Delete a column and its tasks.
-- [ ] **`PATCH /columns/:id/reorder`**: Reorder columns within a board.
+- [x] **`ColumnsModule` Scaffold**: Controller, Service, DTOs.
+- [x] **`POST /boards/:boardId/columns`**: Create a new column in a board with calculated order index.
+- [x] **`PATCH /columns/:id`**: Rename or update a column.
+- [x] **`DELETE /columns/:id`**: Delete a column and its tasks.
+- [x] **`PATCH /boards/:boardId/columns/reorder`**: Transactionally reorder columns within a board.
 
 ---
 
 ### 5. Tasks Management & Movement API (`apps/server`)
 
 #### Completed Tasks:
-- *(None yet — Module scaffold pending)*
-
-#### Remaining Tasks:
-- [ ] **`TasksModule` Scaffold**: Controller, Service, DTOs.
-- [ ] **`POST /columns/:columnId/tasks`**: Create a task inside a column with automatic ordering placement at the end.
-- [ ] **`PATCH /tasks/:id`**: Update task details (title, description).
-- [ ] **`DELETE /tasks/:id`**: Remove a task.
-- [ ] **`PATCH /tasks/:id/move` (Task Movement API - Core Requirement)**:
+- [x] **`TasksModule` Scaffold**: Controller, Service, DTOs.
+- [x] **`POST /columns/:columnId/tasks`**: Create a task inside a column with automatic end placement.
+- [x] **`PATCH /tasks/:id`**: Update task details (title, description).
+- [x] **`DELETE /tasks/:id`**: Remove a task.
+- [x] **`PATCH /tasks/:id/move` (Task Movement API - Core Requirement)**:
   - Payload: `{ targetColumnId: string, newPosition: number }`.
   - **Case 1 (Reorder within same column)**: Adjust ordering of sibling tasks transactionally without collision.
   - **Case 2 (Move across columns)**: Update `columnId` and reindex positions in destination column.
-  - **Order Consistency**: Atomic database transaction (`prisma.$transaction`) to ensure stable, conflict-free indices.
+  - **Order Consistency**: Atomic database transaction (`prisma.$transaction`) ensuring stable, conflict-free indices.
 
 ---
 
@@ -150,10 +133,10 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 - [x] **Header Component (`components/header.tsx`)**:
   - High-contrast editorial brand lockup with pill geometry, user avatar, and dark/light mode toggle.
 
-#### Remaining Tasks (for full backend integration):
-- [ ] Connect board view to `GET /boards/:id` live API.
+#### Remaining Tasks (for full frontend-backend integration):
+- [ ] Connect board view to `GET /boards` and `GET /boards/:id` live API.
 - [ ] Connect drag-and-drop drop event to `PATCH /tasks/:id/move` backend endpoint.
-- [ ] Connect board sharing to `POST /boards/:id/members` backend endpoint.
+- [ ] Connect board sharing to `POST /boards/:id/members` and `DELETE /boards/:id/members/:userId` backend endpoints.
 - [ ] Connect column and task creations/updates/deletions to live backend endpoints.
 
 ---
@@ -175,17 +158,18 @@ This checklist tracks the implementation status for the **Webbriks Mini Kanban B
 |---|---|---|
 | **Database** | Prisma Models (`User`, `Board`, `BoardMember`, `Column`, `Task`) | ✅ **Completed** |
 | **Backend** | Auth (`/auth/register`, `/auth/login`, `/auth/me`, JWT Guard) | ✅ **Completed** |
+| **Backend** | User Search (`GET /users/search?q=...`) | ✅ **Completed** |
+| **Backend** | Boards CRUD & Multi-Tenant Access Control | ✅ **Completed** |
+| **Backend** | Board Sharing & Collaborator Members API | ✅ **Completed** |
+| **Backend** | Columns CRUD & Column Reordering | ✅ **Completed** |
+| **Backend** | Tasks CRUD | ✅ **Completed** |
+| **Backend** | Task Movement & Positional Reordering Engine (`prisma.$transaction`) | ✅ **Completed** |
 | **Backend** | Swagger OpenAPI Docs (`/api`) | ✅ **Completed** |
-| **Backend** | Boards CRUD & Access Control | ⏳ **Pending** |
-| **Backend** | Board Sharing & Members API | ⏳ **Pending** |
-| **Backend** | Columns CRUD | ⏳ **Pending** |
-| **Backend** | Tasks CRUD | ⏳ **Pending** |
-| **Backend** | Task Movement & Positional Reordering API | ⏳ **Pending** |
 | **Frontend** | Base UI primitives & Tailwind v4 | ✅ **Completed** |
 | **Frontend** | API Client & Zustand Auth Store | ✅ **Completed** |
 | **Frontend** | Login (`/login`) & Register (`/register`) Views | ✅ **Completed** |
 | **Frontend** | Interactive Kanban Board View | ✅ **Completed** |
 | **Frontend** | Drag-and-Drop Task Movement & Reordering | ✅ **Completed (Client Store)** |
 | **Frontend** | Board Sharing Modal | ✅ **Completed (Client Store)** |
-| **Frontend** | Live Backend API Integration for Board / Drag-and-Drop | ⏳ **Pending** |
+| **Frontend** | Live Backend API Integration | ⏳ **Next Step** |
 | **DevOps** | Docker / Podman Orchestration & Prisma Studio | ✅ **Completed** |

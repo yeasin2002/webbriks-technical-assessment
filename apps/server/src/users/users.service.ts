@@ -31,4 +31,24 @@ export class UsersService {
       },
     });
   }
+
+  async searchUsers(query: string, excludeUserId: string): Promise<SafeUser[]> {
+    if (!query || query.trim().length === 0) {
+      return [];
+    }
+    const cleanQuery = query.trim().toLowerCase();
+    const users = await prisma.user.findMany({
+      where: {
+        id: { not: excludeUserId },
+        OR: [
+          { email: { contains: cleanQuery, mode: "insensitive" } },
+          { name: { contains: cleanQuery, mode: "insensitive" } },
+        ],
+      },
+      take: 10,
+      orderBy: { email: "asc" },
+    });
+
+    return users.map((u) => this.toSafeUser(u));
+  }
 }
