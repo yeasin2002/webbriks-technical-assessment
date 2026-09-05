@@ -2,9 +2,10 @@
 
 A full-stack collaborative Kanban board application built for the **Webbriks Technical Assessment**.
 
+
 ## Tech Stack
 
-- **Frontend**: Next.js 16 (App Router), React 19, Tailwind CSS v4, shadcn/Radix UI
+- **Frontend**: Next.js 16 (App Router), React 19, Tailwind CSS v4, shadcn/Radix UI, @tanstack/react-query
 - **Backend**: NestJS 11 (Express 5, TypeScript)
 - **Database**: PostgreSQL 16 with Prisma ORM
 - **Monorepo & DevOps**: Turborepo, pnpm, Docker Compose
